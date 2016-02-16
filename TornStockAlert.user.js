@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.3
+// @version      0.4
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -17,10 +17,6 @@
    GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert
  */
 'use strict';
-
-if (GM_getValue("stock-alert").length < 3) {
-    GM_setValue("stock-alert", "");
-}
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -62,12 +58,12 @@ getStocks();
 function checkNewData() {
     // Check 'random' shares
     var change = 0;
-    var TCP = GM_getValue("TCP");
+    var TCP = GM_getValue("TCP", 0.0);
     if (TCP != stocks[stockId.TCP][2]) {
         GM_setValue("TCP", stocks[stockId.TCP][2]);
         change = 1;
     }
-    var FHG = GM_getValue("FHG");
+    var FHG = GM_getValue("FHG", 0.0);
     if (FHG != stocks[stockId.FHG][2]) {
         GM_setValue("FHG", stocks[stockId.FHG][2]);
         change = 1;
@@ -229,13 +225,18 @@ $("li#stock-market").click(function() {
 function addAlertsToSettings() {
     $("ul#stock-alert-list").empty();
     // This first part is identical to processAlerts()
-    var alerts = GM_getValue("stock-alert");
+    var alerts = GM_getValue("stock-alert", "");
     if (alerts === "") {
         // Nothing to do
         return;
     }
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
+    if (alertsInArray[0].length === 0 ) {
+        // .split returns an array with one empty string element
+        // if split on an empty string
+        return;
+    }
     for (var alertKey in alertsInArray) {
         // Split the alert to get the data
         // Example [4,YAZ,available,more,0]
@@ -266,7 +267,7 @@ $("ul#stock-alert-list").children().click(function() {
 function removeAlert(id) {
     var newAlerts = "";
     // This first part is identical to processAlerts()
-    var alerts = GM_getValue("stock-alert");
+    var alerts = GM_getValue("stock-alert", "");
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
     for (var alertKey in alertsInArray) {
@@ -320,7 +321,7 @@ function createAlert(stock, action, mutation, value) {
     var first = 0;
     // Manual reset
     //GM_setValue("stock-alert", "");
-    var stored = GM_getValue("stock-alert");
+    var stored = GM_getValue("stock-alert", "");
     if (stored === "") {
         // Reset counter
         GM_setValue("serial", "0");
@@ -340,8 +341,8 @@ function createAlert(stock, action, mutation, value) {
 function getSerial() {
     // Manual reset
     //GM_setValue("serial", "");
-    var serial = GM_getValue("serial");
-    if (serial === "") {
+    var serial = GM_getValue("serial", 0);
+    if (serial === 0) {
         serial = "1";
         GM_setValue("serial", serial);
     } else {
@@ -357,8 +358,8 @@ function processAlerts() {
     var text, st;
 
     // Stored alerts
-    var alerts = GM_getValue("stock-alert").toString();
-    console.log(GM_getValue("stock-alert"));
+    var alerts = GM_getValue("stock-alert", "");
+    console.log(GM_getValue("stock-alert", ""));
     // String split() gets individual alerts
     if (alerts === "") {
         // Nothing to do
