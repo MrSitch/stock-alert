@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Torn Stock Alert
-// @namespace    http://tampermonkey.net/
+// @namespace    http://eu.relentless.pw/
 // @version      0.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
@@ -14,7 +14,7 @@
 // ==/UserScript==
 /* jshint -W097 */
 /*global
-   GM_setValue, GM_getValue, GM_log, $, document, window, alert
+   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert
  */
 'use strict';
 
@@ -226,6 +226,10 @@ function addAlertsToSettings() {
     $("ul#stock-alert-list").empty();
     // This first part is identical to processAlerts()
     var alerts = GM_getValue("stock-alert");
+    if (alerts === "") {
+        // Nothing to do
+        return;
+    }
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
     for (var alertKey in alertsInArray) {
@@ -348,6 +352,10 @@ function processAlerts() {
     var alerts = GM_getValue("stock-alert");
     console.log(GM_getValue("stock-alert"));
     // String split() gets individual alerts
+    if (alerts === "") {
+        // Nothing to do
+        return;
+    }
     var alertsInArray = alerts.split("|");
     for (var alert in alertsInArray) {
         // Split the alert to get hte data
