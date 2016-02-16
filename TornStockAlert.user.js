@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.5.1
+// @version      0.6
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -24,6 +24,8 @@
 // Bug Hank: very good and very poor forecast <-- @DONE
 // Feature request Afwas: Add demand
 // Bug BraveKath: Remove the last alert from settings <-- @CONFIRMED
+// Bug decap101: Removing more than one alert doesn't work
+// Bug decap101: Wrong data for stock, picks wrong stock. <-- @SEVERE @DONE
 // Feature request ?? : Firefox / Greasemonkey <-- @DONE
 
 // Globals
@@ -50,6 +52,9 @@ function getStocks() {
         function( data ) {
             // data is already an object
             for(var key in data.stocks) {
+                if (key == 25) {
+                    stocks.push(["FOO", "Foo", 0, 0.0, "Average"]);
+                }
                 stocks.push([data.stocks[key].acronym.trim(), data.stocks[key].name, data.stocks[key].current_price, data.stocks[key].available_shares, data.stocks[key].forecast]);
             }
             // If a page is new loaded refresh is 0 --> Add the banners
@@ -382,7 +387,9 @@ function processAlerts() {
         var al = alertsInArray[alert].split("-");
         // Get stock data for this stock
         var stId = stockId[al[1]];
+        
         st = stocks[stId];
+        // console.log("Compare stocks[stId] with al[1]: " + stocks[stId][0] + " <-> " + al[1] + ". stId = " + stId);
         // Switch over action 'price', 'available', 'forecast'
         switch (al[2]) {
             case "price":
