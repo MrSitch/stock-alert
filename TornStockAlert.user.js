@@ -235,6 +235,10 @@ function addAlertsToSettings() {
     for (var alertKey in alertsInArray) {
         // Split the alert to get the data
         // Example [4,YAZ,available,more,0]
+        if (alertsInArray[alertKey] === "") {
+            // Nothing to do
+            return;
+        }
         var alert = alertsInArray[alertKey].split("-");
         var str = "#" + alert[0] + ": \t" + alert[1] + "\t" + alert[2] +
             "\t" + alert[3] +  ((alert[2] === "forecast") ? "" : "\t" + alert[4]);
