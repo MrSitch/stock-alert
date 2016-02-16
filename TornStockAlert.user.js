@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.4
+// @version      0.5
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
 // @match        http://www.torn.com/preferences.php*
 // @match        https://www.torn.com/index.php
 // @match        https://www.torn.com/preferences.php*
+// @require      https://code.jquery.com/jquery-1.12.0.min.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_log
@@ -17,6 +18,13 @@
    GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert
  */
 'use strict';
+
+// Feature request Nash: time every 15 minutes a few seconds after 13, 28, 43 and 58
+// Feature request Nash: Show on all pages
+// Bug Hank: very good and very poor forecast
+// Feature request Afwas: Add demand
+// Bug BraveKath: Remove the last alert from settings
+// Feature request ?? : Greasemonkey <-- @DONE
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -334,7 +342,7 @@ function createAlert(stock, action, mutation, value) {
     // I think we are now on the settings page, so refresh it.
     addAlertsToSettings();
     // Debug
-    console.log(GM_getValue("stock-alert"));
+    console.log(GM_getValue("stock-alert", ""));
 }
 
 // Get a unique number to distinguish similar looking queries
