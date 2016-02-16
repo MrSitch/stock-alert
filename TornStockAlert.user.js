@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.2
+// @version      0.3
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -17,6 +17,10 @@
    GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert
  */
 'use strict';
+
+if (GM_getValue("stock-alert").length < 3) {
+    GM_setValue("stock--alert", "");
+}
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -353,7 +357,7 @@ function processAlerts() {
     var text, st;
 
     // Stored alerts
-    var alerts = GM_getValue("stock-alert");
+    var alerts = GM_getValue("stock-alert").toString();
     console.log(GM_getValue("stock-alert"));
     // String split() gets individual alerts
     if (alerts === "") {
