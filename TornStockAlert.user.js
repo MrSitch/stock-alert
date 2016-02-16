@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.6
+// @version      0.6.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -24,9 +24,10 @@
 // Bug Hank: very good and very poor forecast <-- @DONE
 // Feature request Afwas: Add demand
 // Bug BraveKath: Remove the last alert from settings <-- @CONFIRMED
-// Bug decap101: Removing more than one alert doesn't work
+// Bug decap101: Removing more than one alert doesn't work <-- @CONFIRMED
 // Bug decap101: Wrong data for stock, picks wrong stock. <-- @SEVERE @DONE
 // Feature request ?? : Firefox / Greasemonkey <-- @DONE
+// Bug decap101: Missing SYS in list <-- @DONE
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -105,7 +106,7 @@ $.fn.notify = function(message) {
 var stockId = {"TCSE": "0",
                "TSBC": "1",
                "TCB": "2",
-               "MFG": "3",
+               "SYS": "3",
                "SLAG": "4",
                "IOU": "5",
                "GRN": "6",
@@ -156,7 +157,7 @@ page += "\t\t<form class=\"m-top10\" action=\"\" id=\"stock-form\">";
 page += "\t\t\t<select id=\"stock-alert-stock\" name=\"stock-alert-stock\">";
 page += "\t\t\t\t<option value=\"TCSE\">TCSE</option>";
 page += "\t\t\t\t<option value=\"TCB\">TCB</option>";
-page += "\t\t\t\t<option value=\"MFG\">MFG</option>";
+page += "\t\t\t\t<option value=\"SYS\">SYS</option>";
 page += "\t\t\t\t<option value=\"SLAG\">SLAG</option>";
 page += "\t\t\t\t<option value=\"IOU\">IOU</option>";
 page += "\t\t\t\t<option value=\"GRN\">GRN</option>";
