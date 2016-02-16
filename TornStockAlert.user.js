@@ -136,8 +136,8 @@ var page = "</div><div id=\"stock-market-page\" class=\"prefs-cont left ui-tabs-
 page += "ui-widget-content ui-corner-bottom\" aria-labelledby=\"ui-id-33\" ";
 page += "role=\"tabpanel\" aria-expanded=\"true\" aria-hidden=\"true\" style=\"display: none;\">";
 page += "\t<div class=\"inner-block\">";
-page += "\t\t<p class=\"m-top3\">These are the watches you have currently set.</p>";
-page += "\t\t<ul class-\"m-top3\" id=\stock-alert\">";
+page += "\t\t<p class=\"m-top3\">These are the watches you have currently set. Click any to remove.</p>";
+page += "\t\t<ul class-\"m-top3\" id=\"stock-alert-list\">";
 page += "\t\t</ul>";
 page += "\t\t<form class=\"m-top10\" action=\"\" id=\"stock-form\">";
 page += "\t\t\t<select id=\"stock-alert-stock\" name=\"stock-alert-stock\">";
@@ -201,10 +201,11 @@ page += "</div>";
 
 // Put 'page' somewhere between similar panes
 $("#management").after(page);
+// Add alerts
+addAlertsToSettings();
 
 // Add page to settingspage 
 $("li#stock-market").click(function() {
-    console.log("clicked");
     // Just the fancy click on the left-side menu
     $("li.ui-tabs-active").removeClass("ui-state-active").removeClass("ui-tabs-active");
     $("li#stock-market").addClass("ui-tabs-active").addClass("ui-state-active");
@@ -220,6 +221,62 @@ $("li#stock-market").click(function() {
         $("#stock-market-page").css("display", "none").attr("aria-expanded", "false").attr("aria-hidden", "true");
     });
 });
+
+// Add existing alerts to settings page
+function addAlertsToSettings() {
+    $("ul#stock-alert-list").empty();
+    // This first part is identical to processAlerts()
+    var alerts = GM_getValue("stock-alert");
+    console.log(GM_getValue("stock-alert"));
+    // String split() gets individual alerts
+    var alertsInArray = alerts.split("|");
+    for (var alertKey in alertsInArray) {
+        // Split the alert to get the data
+        // Example [4,YAZ,available,more,0]
+        var alert = alertsInArray[alertKey].split("-");
+        var str = "#" + alert[0] + ": \t" + alert[1] + "\t" + alert[2] +
+            "\t" + alert[3] +  ((alert[2] === "forecast") ? "" : "\t" + alert[4]);
+        $("ul#stock-alert-list").append(
+            "<li id=\"stock" + alert[0] + "\">" + str + "</li>"
+         );
+    }
+}
+    
+// Remove an alert by clicking on it in settings
+$("ul#stock-alert-list").children().click(function() {
+    var id = $(this).attr("id");
+    // get the number
+    id = id.substr(5);
+    // Remove alert from list; store new list
+    removeAlert(id);
+    // Append the new list to the <ul>
+    addAlertsToSettings();
+});
+
+function removeAlert(id) {
+    var newAlerts = "";
+    // This first part is identical to processAlerts()
+    var alerts = GM_getValue("stock-alert");
+    console.log(GM_getValue("stock-alert"));
+    // String split() gets individual alerts
+    var alertsInArray = alerts.split("|");
+    for (var alertKey in alertsInArray) {
+        // Split the alert to get the data
+        // Example [4,YAZ,available,more,0]
+        var alert = alertsInArray[alertKey].split("-");
+        if (alert[0] === id) {
+            continue;
+        } else {
+            if (newAlerts === "") {
+                newAlerts = alertsInArray[alertKey];
+            } else {
+                newAlerts += "|" + alertsInArray[alertKey];
+            }
+        }
+        GM_setValue("stock-alert", newAlerts);
+    }
+}
+
 
 // Toggle menu after forecast is selected. Forecast uses a different sub-menu
 $("#stock-action").change(function() {
