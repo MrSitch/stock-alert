@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.5
+// @version      0.5.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -21,10 +21,10 @@
 
 // Feature request Nash: time every 15 minutes a few seconds after 13, 28, 43 and 58
 // Feature request Nash: Show on all pages
-// Bug Hank: very good and very poor forecast
+// Bug Hank: very good and very poor forecast <-- @DONE
 // Feature request Afwas: Add demand
-// Bug BraveKath: Remove the last alert from settings
-// Feature request ?? : Greasemonkey <-- @DONE
+// Bug BraveKath: Remove the last alert from settings <-- @CONFIRMED
+// Feature request ?? : Firefox / Greasemonkey <-- @DONE
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -191,9 +191,11 @@ page += "\t\t\t\t<option value=\"equal\">Equals</option>";
 page += "\t\t\t\t<option value=\"more\">More than</option>";
 page += "\t\t\t</select>";
 page += "\t\t\t<select id=\"stock-forecast\" name=\"stock-forecast\" style=\"display: none\">";
+page += "\t\t\t\t<option value=\"verypoor\">Very Poor</option>";
 page += "\t\t\t\t<option value=\"poor\">Poor</option>";
 page += "\t\t\t\t<option value=\"average\">Average</option>";
 page += "\t\t\t\t<option value=\"good\">Good</option>";
+page += "\t\t\t\t<option value=\"verygood\">Very Good</option>";
 page += "\t\t\t</select>";
 page += "\t\t\t<input type=\"text\" name=\"stock-value\" id=\"stock-value\" value=\"0\">";
 page += "\t\t\t<div class=\"btn-wrap silver change\">";
@@ -463,6 +465,17 @@ function processAlerts() {
             case "forecast":
                 // console.log("al[3]: " + al[3]);
                 switch (al[3]) {
+                    case "verypoor":
+                        if (st[4] === "Very Poor") {
+                            // Print banner
+                            text = al[1] + " - Forecast for " + st[1] + " is VERY POOR.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } else {
+                                console.log("Mismatch st[4] <-> \"Very Poor\": " + st[4] + " <-> " + "Very Poor");
+                            }
+                        }
+                        break;
                     case "poor":
                         if (st[4] === "Poor") {
                             // Print banner
@@ -494,6 +507,18 @@ function processAlerts() {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } else {
                                 console.log("Mismatch st[4] <-> \"Good\": " + st[4] + " <-> " + "Good");
+                            }
+                        }
+                        break;
+                    case "verygood":
+                        if (st[4] === "Very Good") {
+                            // Print banner
+                            console.log("al[3] should be \"good\": " + al[3]);
+                            text = al[1] + " - Forecast for " + st[1] + " is VERY GOOD.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } else {
+                                console.log("Mismatch st[4] <-> \"Very Good\": " + st[4] + " <-> " + "Very Good");
                             }
                         }
                         break;
