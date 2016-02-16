@@ -28,21 +28,26 @@ var stockUrl3 = "http://api.torn.com/torn/?selections=stocks&key=" + myAPI;
 // Either one will be used
 var stockUrl = stockUrl1;
 
+// Interval for refreshing banners in seconds. A good refresh-time is 60 seconds.
+// The stockmarket seems to refresh just after 00, 15, 30, 45 minutes every hour.
+var interval = 60;
+
 // The JSON needs to be retreived. Might as well do it here and now
 var stocks = [];
-$.get( 
-    stockUrl, 
-    function( data ) {
-    // data is already an object
-    for(var key in data.stocks) {
-        stocks.push([data.stocks[key].acronym.trim(), data.stocks[key].name, data.stocks[key].current_price, data.stocks[key].available_shares, data.stocks[key].forecast]);
-    }
-    processAlerts();
-});
-
+(function getStocks() {
+    $.get( 
+        stockUrl, 
+        function( data ) {
+            // data is already an object
+            for(var key in data.stocks) {
+                stocks.push([data.stocks[key].acronym.trim(), data.stocks[key].name, data.stocks[key].current_price, data.stocks[key].available_shares, data.stocks[key].forecast]);
+            }
+            processAlerts();
+        });
+}());
 // Notify adds the cool banner to the top of page index,php
 $.fn.notify = function(message) {
-    var pre = "<div class=\"info-msg-cont green border-round m-top10\">";
+    var pre = "<div class=\"info-msg-cont green border-round m-top10 stock-alert\">";
     pre += "<div class=\"info-msg border-round\"><i class=\"info-icon\">";
     pre += "</i><div class=\"delimiter\"><div class=\"msg right-round\"><ul><li>";
     var post = "</li></ul></div></div></div></div>";
@@ -258,7 +263,7 @@ function processAlerts() {
 
     // Stored alerts
     var alerts = GM_getValue("stock-alert");
-    console.log(GM_getValue("stock-alert"));
+    // console.log(GM_getValue("stock-alert"));
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
     for (var alert in alertsInArray) {
@@ -333,25 +338,25 @@ function processAlerts() {
                 } // most inner switch
                 break;
             case "forecast":
-                console.log("al[3]: " + al[3]);
+                // console.log("al[3]: " + al[3]);
                 switch (al[3]) {
                     case "poor":
                         // Print banner
-                        text = al[1] + " - Forecast for " + st[1] + " is poor.";
+                        text = al[1] + " - Forecast for " + st[1] + " is POOR.";
                         if ($("h4.left:contains('Home')").text().length) {
                             $("hr.page-head-delimiter:first").notify(text);
                         } // if
                         break;
                     case "average":
                         // Print banner
-                        text = al[1] + " - Forecast for " + st[1] + " is average.";
+                        text = al[1] + " - Forecast for " + st[1] + " is AVERAGE.";
                         if ($("h4.left:contains('Home')").text().length) {
                             $("hr.page-head-delimiter:first").notify(text);
                         } // if
                         break;
                     case "good":
                         // Print banner
-                        text = al[1] + " - Forecast for " + st[1] + " is good.";
+                        text = al[1] + " - Forecast for " + st[1] + " is GOOD.";
                         if ($("h4.left:contains('Home')").text().length) {
                             $("hr.page-head-delimiter:first").notify(text);
                         } // if
@@ -361,4 +366,9 @@ function processAlerts() {
         } // outer most switch
     } // for loop
 }
-    
+
+interval = interval * 1000;
+window.setInterval(function() {
+    $(".stock-alert").remove();
+    getStocks();
+}, interval);
