@@ -34,7 +34,9 @@ var interval = 60;
 
 // The JSON needs to be retreived. Might as well do it here and now
 var stocks = [];
-(function getStocks() {
+var newData = 1;
+var refresh = 0;
+function getStocks() {
     $.get( 
         stockUrl, 
         function( data ) {
@@ -42,9 +44,34 @@ var stocks = [];
             for(var key in data.stocks) {
                 stocks.push([data.stocks[key].acronym.trim(), data.stocks[key].name, data.stocks[key].current_price, data.stocks[key].available_shares, data.stocks[key].forecast]);
             }
-            processAlerts();
+            // If a page is new loaded refresh is 0 --> Add the banners
+            // newData denotes a change in data from the servers. Go refresh!
+            if (!refresh || newData) {
+                processAlerts();
+                newData = 0;
+            }
         });
-}());
+}
+getStocks();
+
+// Try to prevent refresh if data from server is not new
+function checkNewData() {
+    // Check 'random' shares
+    var change = 0;
+    var TCP = GM_getValue("TCP");
+    if (TCP != stocks[stockId.TCP][2]) {
+        GM_setValue("TCP", stocks[stockId.TCP][2]);
+        change = 1;
+    }
+    var FHG = GM_getValue("FHG");
+    if (FHG != stocks[stockId.FHG][2]) {
+        GM_setValue("FHG", stocks[stockId.FHG][2]);
+        change = 1;
+    }
+    // change denotes a change in shareprices. Go update!
+    return change;
+}
+
 // Notify adds the cool banner to the top of page index,php
 $.fn.notify = function(message) {
     var pre = "<div class=\"info-msg-cont green border-round m-top10 stock-alert\">";
@@ -263,7 +290,7 @@ function processAlerts() {
 
     // Stored alerts
     var alerts = GM_getValue("stock-alert");
-    // console.log(GM_getValue("stock-alert"));
+    console.log(GM_getValue("stock-alert"));
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
     for (var alert in alertsInArray) {
@@ -281,7 +308,7 @@ function processAlerts() {
                         // if (stock[name][current_value] < value) { ... }
                         if (st[3] < al[4]) {
                             // Print banner
-                            text = al[1] + " - The price of " + st[1] + " is less than " + al[4] + ".";
+                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[3] + " )  is less than " + al[4] + ".";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
@@ -294,7 +321,7 @@ function processAlerts() {
                         // if (stock[name][current_value] > value) { ... }
                         if (st[3] < al[4]) {
                             // Print banner
-                            text = al[1] + " - The price of " + st[1] + " is greater than " + al[4] + ".";
+                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[3] + " ) is greater than " + al[4] + ".";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
@@ -326,7 +353,7 @@ function processAlerts() {
                         break;
                     case "more":
                         // if (stock[name][available_share] > available) { ... }
-                        console.log("st[4] > al[4]: " + st[4] + " > " + al[4]);
+                        // console.log("st[4] > al[4]: " + st[4] + " > " + al[4]);
                         if (st[4] > al[4]) {
                             // Print banner
                             text = al[1] + " - There more than " + al[4] + " shares in " + st[1] + " available.";
@@ -369,6 +396,13 @@ function processAlerts() {
 
 interval = interval * 1000;
 window.setInterval(function() {
-    $(".stock-alert").remove();
-    getStocks();
+    if (window.location.pathname == "/index.php") {
+        refresh = 1;
+        newData = checkNewData();
+        console.log("Auto-refresh");
+        if (newData) {
+            $(".stock-alert").remove();
+        }
+        getStocks();
+    }
 }, interval);
