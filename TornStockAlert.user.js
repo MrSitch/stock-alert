@@ -85,9 +85,9 @@ $.fn.notify = function(message) {
 };
 
 // Test notify
-if ($("h4.left:contains('Home')").text().length) {
+/* if ($("h4.left:contains('Home')").text().length) {
     $("hr.page-head-delimiter:first").notify("Hello World!");
-}
+} */
 
 var stockId = {"TCSE": "0",
                "TSBC": "1",
@@ -142,36 +142,35 @@ page += "\t\t</ul>";
 page += "\t\t<form class=\"m-top10\" action=\"\" id=\"stock-form\">";
 page += "\t\t\t<select id=\"stock-alert-stock\" name=\"stock-alert-stock\">";
 page += "\t\t\t\t<option value=\"TCSE\">TCSE</option>";
-page += "\t\t\t\t<option value=\"IIL\">IIL</option>";
-page += "\t\t\t\t<option value=\"TSBC\">TSBC</option>";
-page += "\t\t\t\t<option value=\"MCS\">MCS</option>";
-page += "\t\t\t\t<option value=\"CNC\">CNC</option>";
-page += "\t\t\t\t<option value=\"LSC\">LSC</option>";
-page += "\t\t\t\t<option value=\"WLT\">WLT</option>";
-page += "\t\t\t\t<option value=\"BAG\">BAG</option>";
-page += "\t\t\t\t<option value=\"YAZ\">YAZ</option>";
-page += "\t\t\t\t<option value=\"SYM\">SYM</option>";
-page += "\t\t\t\t<option value=\"TCHS\">TCHS</option>";
-page += "\t\t\t\t<option value=\"TCBC\">TCBC</option>";
-page += "\t\t\t\t<option value=\"SYS\">SYS</option>";
-page += "\t\t\t\t<option value=\"TCM\">TCM</option>";
-page += "\t\t\t\t<option value=\"EWM\">EWM</option>";
-page += "\t\t\t\t<option value=\"FHG\">FHG</option>";
-page += "\t\t\t\t<option value=\"HRG\">HRG</option>";
-page += "\t\t\t\t<option value=\"ISTC\">ISTC</option>";
-page += "\t\t\t\t<option value=\"PRN\">PRN</option>";
-page += "\t\t\t\t<option value=\"TCP\">TCP</option>";
-page += "\t\t\t\t<option value=\"TCT\">TCT</option>";
-page += "\t\t\t\t<option value=\"TMI\">TMI</option>";
-page += "\t\t\t\t<option value=\"TCC\">TCC</option>";
-page += "\t\t\t\t<option value=\"GRN\">GRN</option>";
+page += "\t\t\t\t<option value=\"TCB\">TCB</option>";
+page += "\t\t\t\t<option value=\"MFG\">MFG</option>";
 page += "\t\t\t\t<option value=\"SLAG\">SLAG</option>";
 page += "\t\t\t\t<option value=\"IOU\">IOU</option>";
+page += "\t\t\t\t<option value=\"GRN\">GRN</option>";
+page += "\t\t\t\t<option value=\"TCHS\">TCHS</option>";
+page += "\t\t\t\t<option value=\"YAZ\">YAZ</option>";
+page += "\t\t\t\t<option value=\"TCT\">TCT</option>";
+page += "\t\t\t\t<option value=\"CNC\">CNC</option>";
 page += "\t\t\t\t<option value=\"MSG\">MSG</option>";
+page += "\t\t\t\t<option value=\"TMI\">TMI</option>";
+page += "\t\t\t\t<option value=\"TCP\">TCP</option>";
+page += "\t\t\t\t<option value=\"IIL\">IIL</option>";
+page += "\t\t\t\t<option value=\"FHG\">FHG</option>";
+page += "\t\t\t\t<option value=\"SYM\">SYM</option>";
+page += "\t\t\t\t<option value=\"LSC\">LSC</option>";
+page += "\t\t\t\t<option value=\"PRN\">PRN</option>";
+page += "\t\t\t\t<option value=\"EWM\">EWM</option>";
+page += "\t\t\t\t<option value=\"TCM\">TCM</option>";
 page += "\t\t\t\t<option value=\"ELBT\">ELBT</option>";
-page += "\t\t\t\t<option value=\"EVL\">EVL</option>";
+page += "\t\t\t\t<option value=\"HRG\">HRG</option>";
 page += "\t\t\t\t<option value=\"TGP\">TGP</option>";
 page += "\t\t\t\t<option value=\"WSSB\">WSSB</option>";
+page += "\t\t\t\t<option value=\"ISTC\">ISTC</option>";
+page += "\t\t\t\t<option value=\"BAG\">BAG</option>";
+page += "\t\t\t\t<option value=\"EVL\">EVL</option>";
+page += "\t\t\t\t<option value=\"MCS\">MCS</option>";
+page += "\t\t\t\t<option value=\"WLT\">WLT</option>";
+page += "\t\t\t\t<option value=\"TCC\">TCC</option>";
 page += "\t\t\t</select>";
 page += "\t\t\t<select id=\"stock-action\" name=\"stock-action\">";
 page += "\t\t\t\t<option value=\"price\">Price</option>";
@@ -181,7 +180,7 @@ page += "\t\t\t</select>";
 page += "\t\t\t<select id=\"stock-mutation\" name=\"stock-mutation\">";
 page += "\t\t\t\t<option value=\"less\">Less than</option>";
 page += "\t\t\t\t<option value=\"equal\">Equals</option>";
-page += "\t\t\t\t<option value=\"more\">more than</option>";
+page += "\t\t\t\t<option value=\"more\">More than</option>";
 page += "\t\t\t</select>";
 page += "\t\t\t<select id=\"stock-forecast\" name=\"stock-forecast\" style=\"display: none\">";
 page += "\t\t\t\t<option value=\"poor\">Poor</option>";
@@ -227,7 +226,6 @@ function addAlertsToSettings() {
     $("ul#stock-alert-list").empty();
     // This first part is identical to processAlerts()
     var alerts = GM_getValue("stock-alert");
-    console.log(GM_getValue("stock-alert"));
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
     for (var alertKey in alertsInArray) {
@@ -257,7 +255,6 @@ function removeAlert(id) {
     var newAlerts = "";
     // This first part is identical to processAlerts()
     var alerts = GM_getValue("stock-alert");
-    console.log(GM_getValue("stock-alert"));
     // String split() gets individual alerts
     var alertsInArray = alerts.split("|");
     for (var alertKey in alertsInArray) {
@@ -321,6 +318,8 @@ function createAlert(stock, action, mutation, value) {
         mutation + ((action === "forecast") ? "" : "-" + value);
     stored = ((first) ? "" : stored + "|") + newAlert;
     GM_setValue("stock-alert", stored);
+    // I think we are now on the settings page, so refresh it.
+    addAlertsToSettings();
     // Debug
     console.log(GM_getValue("stock-alert"));
 }
@@ -363,26 +362,33 @@ function processAlerts() {
                 switch (al[3]) {
                     case "less":
                         // if (stock[name][current_value] < value) { ... }
-                        if (st[3] < al[4]) {
+                        if (parseFloat(st[2]) < parseFloat(al[4])) {
                             // Print banner
-                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[3] + " )  is less than " + al[4] + ".";
+                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " )  is less than " + al[4] + ".";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
-                        }  // if
+                        } else {
+                            console.log("Mismatch st[2] < al[4]: " + st[2] + " < " + al[4]);
+                        }
                         break;
                     case "equal":
                         // Won't happen. Skip
                         break;
                     case "more":
                         // if (stock[name][current_value] > value) { ... }
-                        if (st[3] < al[4]) {
+                        if (parseFloat(st[2]) > parseFloat(al[4])) {
                             // Print banner
-                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[3] + " ) is greater than " + al[4] + ".";
+                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " ) is greater than " + al[4] + ".";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
-                        }  // if
+                        } else {
+                            console.log("Mismatch st[2] > al[4]: " + st[2] + " > " + al[4]);
+                        }
+                        break;
+                    default:
+                        console.log("al[3] seems not to match [less|equal|more] ->" + al[3]);
                         break;
                 }
                 break;
@@ -390,63 +396,88 @@ function processAlerts() {
                 switch (al[3]) {
                     case "less":
                         // if (stock[name][available_share] < available) { ... }
-                        if (st[4] < al[4]) {
+                        if (parseInt(st[4]) < parseInt(al[4])) {
                             // Print banner
-                            text = al[1] + " - There are less than " + al[4] + " shares in " + st[1] + " available.";
+                            text = al[1] + " - There are less than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
-                        }  // if
+                        }else {
+                            console.log("Mismatch st[4] < al[4]: " + st[4] + " < " + al[4]);
+                        }
                         break;
                     case "equal":
                         // if (stock[name][available_share] == available) { ... }
-                        if (st[4] == al[4]) {
+                        if (parseInt(st[4]) === parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There are exactly " + al[4] + " shares in " + st[1] + " available.";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
-                        }  // if
+                        }else {
+                            console.log("Mismatch st[4] === al[4]: " + st[4] + " === " + al[4]);
+                        }
                         break;
                     case "more":
                         // if (stock[name][available_share] > available) { ... }
-                        // console.log("st[4] > al[4]: " + st[4] + " > " + al[4]);
-                        if (st[4] > al[4]) {
+                        // 
+                        if (parseInt(st[4]) > parseInt(al[4])) {
                             // Print banner
-                            text = al[1] + " - There more than " + al[4] + " shares in " + st[1] + " available.";
+                            text = al[1] + " - There more than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
-                        }  // if
+                        } else {
+                            console.log("Mismatch st[4] > al[4]: " + st[4] + " > " + al[4]);
+                        }
                         break;
+                    default:
+                        console.log("al[3] doesn't seem to match [less|equal|more] -> " + al[3]);
                 } // most inner switch
                 break;
             case "forecast":
                 // console.log("al[3]: " + al[3]);
                 switch (al[3]) {
                     case "poor":
-                        // Print banner
-                        text = al[1] + " - Forecast for " + st[1] + " is POOR.";
-                        if ($("h4.left:contains('Home')").text().length) {
-                            $("hr.page-head-delimiter:first").notify(text);
-                        } // if
+                        if (st[4] === "Poor") {
+                            // Print banner
+                            text = al[1] + " - Forecast for " + st[1] + " is POOR.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } else {
+                                console.log("Mismatch st[4] <-> \"Poor\": " + st[4] + " <-> " + "Poor");
+                            }
+                        }
                         break;
                     case "average":
-                        // Print banner
-                        text = al[1] + " - Forecast for " + st[1] + " is AVERAGE.";
-                        if ($("h4.left:contains('Home')").text().length) {
-                            $("hr.page-head-delimiter:first").notify(text);
-                        } // if
+                        if(st[4] === "Average") {
+                            // Print banner
+                            text = al[1] + " - Forecast for " + st[1] + " is AVERAGE.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } else {
+                                console.log("Mismatch st[4] <-> \"Average\": " + st[4] + " <-> " + "Average");
+                            }
+                        }
                         break;
                     case "good":
-                        // Print banner
-                        text = al[1] + " - Forecast for " + st[1] + " is GOOD.";
-                        if ($("h4.left:contains('Home')").text().length) {
-                            $("hr.page-head-delimiter:first").notify(text);
-                        } // if
+                        if (st[4] === "Good") {
+                            // Print banner
+                            console.log("al[3] should be \"good\": " + al[3]);
+                            text = al[1] + " - Forecast for " + st[1] + " is GOOD.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } else {
+                                console.log("Mismatch st[4] <-> \"Good\": " + st[4] + " <-> " + "Good");
+                            }
+                        }
                         break;
-                } // most inner switch
+                    default:
+                        console.log("al[3] doesn't seem to match [poor|average|good] -> " + al[3]);
+                } // inner switch (al[3])
                 break;
+            default:
+                console.log("al[2] doesn't match [price|available|forecast] -> " + al[2]);
         } // outer most switch
     } // for loop
 }
