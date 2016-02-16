@@ -19,7 +19,7 @@
 'use strict';
 
 if (GM_getValue("stock-alert").length < 3) {
-    GM_setValue("stock--alert", "");
+    GM_setValue("stock-alert", "");
 }
 
 // Globals
@@ -412,39 +412,39 @@ function processAlerts() {
                 switch (al[3]) {
                     case "less":
                         // if (stock[name][available_share] < available) { ... }
-                        if (parseInt(st[4]) < parseInt(al[4])) {
+                        if (parseInt(st[3]) < parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There are less than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
                         }else {
-                            console.log("Mismatch st[4] < al[4]: " + st[4] + " < " + al[4]);
+                            console.log("Mismatch st[4] < al[4]: " + st[3] + " < " + al[4]);
                         }
                         break;
                     case "equal":
                         // if (stock[name][available_share] == available) { ... }
-                        if (parseInt(st[4]) === parseInt(al[4])) {
+                        if (parseInt(st[3]) === parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There are exactly " + al[4] + " shares in " + st[1] + " available.";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
                         }else {
-                            console.log("Mismatch st[4] === al[4]: " + st[4] + " === " + al[4]);
+                            console.log("Mismatch st[4] === al[4]: " + st[3] + " === " + al[4]);
                         }
                         break;
                     case "more":
                         // if (stock[name][available_share] > available) { ... }
                         // 
-                        if (parseInt(st[4]) > parseInt(al[4])) {
+                        if (parseInt(st[3]) > parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There more than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
                             if ($("h4.left:contains('Home')").text().length) {
                                 $("hr.page-head-delimiter:first").notify(text);
                             } // if
                         } else {
-                            console.log("Mismatch st[4] > al[4]: " + st[4] + " > " + al[4]);
+                            console.log("Mismatch st[4] > al[4]: " + st[3] + " > " + al[4]);
                         }
                         break;
                     default:
