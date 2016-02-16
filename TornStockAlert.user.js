@@ -1,0 +1,364 @@
+// ==UserScript==
+// @name         Torn Stock Alert
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  Notifies user defined stock market events
+// @author       Afwas [1337627]
+// @match        http://www.torn.com/index.php
+// @match        http://www.torn.com/preferences.php*
+// @match        https://www.torn.com/index.php
+// @match        https://www.torn.com/preferences.php*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_log
+// ==/UserScript==
+/* jshint -W097 */
+/*global
+   GM_setValue, GM_getValue, GM_log, $, document, window, alert
+ */
+'use strict';
+
+// Globals
+var stockUrl1 = "http://eu.relentless.pw/stock.json";
+// Coming soon
+var sockUrl2 = "http://us.relentless.pw/stock.json";
+// Roll your own
+var myAPI = "FancyAPIKeyGoesHere";
+var stockUrl3 = "http://api.torn.com/torn/?selections=stocks&key=" + myAPI;
+// Either one will be used
+var stockUrl = stockUrl1;
+
+// The JSON needs to be retreived. Might as well do it here and now
+var stocks = [];
+$.get( 
+    stockUrl, 
+    function( data ) {
+    // data is already an object
+    for(var key in data.stocks) {
+        stocks.push([data.stocks[key].acronym.trim(), data.stocks[key].name, data.stocks[key].current_price, data.stocks[key].available_shares, data.stocks[key].forecast]);
+    }
+    processAlerts();
+});
+
+// Notify adds the cool banner to the top of page index,php
+$.fn.notify = function(message) {
+    var pre = "<div class=\"info-msg-cont green border-round m-top10\">";
+    pre += "<div class=\"info-msg border-round\"><i class=\"info-icon\">";
+    pre += "</i><div class=\"delimiter\"><div class=\"msg right-round\"><ul><li>";
+    var post = "</li></ul></div></div></div></div>";
+    this.after(
+        pre + message + post
+    );
+    return this;
+};
+
+// Test notify
+if ($("h4.left:contains('Home')").text().length) {
+    $("hr.page-head-delimiter:first").notify("Hello World!");
+}
+
+var stockId = {"TCSE": "0",
+               "TSBC": "1",
+               "TCB": "2",
+               "MFG": "3",
+               "SLAG": "4",
+               "IOU": "5",
+               "GRN": "6",
+               "TCHS": "7",
+               "YAZ": "8",
+               "TCT": "9",
+               "CNC": "10",
+               "MSG": "11",
+               "TMI": "12",
+               "TCP": "13",
+               "IIL": "14",
+               "FHG": "15",
+               "SYM": "16",
+               "LSC": "17",
+               "PRN": "18",
+               "EWM": "19",
+               "TCM": "20",
+               "ELBT": "21",
+               "HRG": "22",
+               "TGP": "23",
+               "WSSB": "25",
+               "ISTC": "26",
+               "BAG": "27",
+               "EVL": "28",
+               "MCS": "29",
+               "WLT": "30",
+               "TCC": "31"};
+
+// Add item to mobile preferences menu
+$("#categories").append("<option value=\"stock_market\">Stock market alerts</option>");
+
+// Add a link to the settings menu in preferences.php
+$(".headers").children("div.clear").before("<li class=\"delimiter\"></li>\n"+
+                                           "<li class=\"c-pointer left-bottom-round\" data-title-name=\"Stock market alerts\" "+
+                                           "id=\"stock-market\">\n"+
+                                           "<a class=\"t-gray-6 bold h stock-market\">Stock Market Alerts</a>\n"+
+                                           "</li>");
+
+// Create settings page/pane for stocks
+var page = "</div><div id=\"stock-market-page\" class=\"prefs-cont left ui-tabs-panel ";
+page += "ui-widget-content ui-corner-bottom\" aria-labelledby=\"ui-id-33\" ";
+page += "role=\"tabpanel\" aria-expanded=\"true\" aria-hidden=\"true\" style=\"display: none;\">";
+page += "\t<div class=\"inner-block\">";
+page += "\t\t<p class=\"m-top3\">These are the watches you have currently set.</p>";
+page += "\t\t<ul class-\"m-top3\" id=\stock-alert\">";
+page += "\t\t</ul>";
+page += "\t\t<form class=\"m-top10\" action=\"\" id=\"stock-form\">";
+page += "\t\t\t<select id=\"stock-alert-stock\" name=\"stock-alert-stock\">";
+page += "\t\t\t\t<option value=\"TCSE\">TCSE</option>";
+page += "\t\t\t\t<option value=\"IIL\">IIL</option>";
+page += "\t\t\t\t<option value=\"TSBC\">TSBC</option>";
+page += "\t\t\t\t<option value=\"MCS\">MCS</option>";
+page += "\t\t\t\t<option value=\"CNC\">CNC</option>";
+page += "\t\t\t\t<option value=\"LSC\">LSC</option>";
+page += "\t\t\t\t<option value=\"WLT\">WLT</option>";
+page += "\t\t\t\t<option value=\"BAG\">BAG</option>";
+page += "\t\t\t\t<option value=\"YAZ\">YAZ</option>";
+page += "\t\t\t\t<option value=\"SYM\">SYM</option>";
+page += "\t\t\t\t<option value=\"TCHS\">TCHS</option>";
+page += "\t\t\t\t<option value=\"TCBC\">TCBC</option>";
+page += "\t\t\t\t<option value=\"SYS\">SYS</option>";
+page += "\t\t\t\t<option value=\"TCM\">TCM</option>";
+page += "\t\t\t\t<option value=\"EWM\">EWM</option>";
+page += "\t\t\t\t<option value=\"FHG\">FHG</option>";
+page += "\t\t\t\t<option value=\"HRG\">HRG</option>";
+page += "\t\t\t\t<option value=\"ISTC\">ISTC</option>";
+page += "\t\t\t\t<option value=\"PRN\">PRN</option>";
+page += "\t\t\t\t<option value=\"TCP\">TCP</option>";
+page += "\t\t\t\t<option value=\"TCT\">TCT</option>";
+page += "\t\t\t\t<option value=\"TMI\">TMI</option>";
+page += "\t\t\t\t<option value=\"TCC\">TCC</option>";
+page += "\t\t\t\t<option value=\"GRN\">GRN</option>";
+page += "\t\t\t\t<option value=\"SLAG\">SLAG</option>";
+page += "\t\t\t\t<option value=\"IOU\">IOU</option>";
+page += "\t\t\t\t<option value=\"MSG\">MSG</option>";
+page += "\t\t\t\t<option value=\"ELBT\">ELBT</option>";
+page += "\t\t\t\t<option value=\"EVL\">EVL</option>";
+page += "\t\t\t\t<option value=\"TGP\">TGP</option>";
+page += "\t\t\t\t<option value=\"WSSB\">WSSB</option>";
+page += "\t\t\t</select>";
+page += "\t\t\t<select id=\"stock-action\" name=\"stock-action\">";
+page += "\t\t\t\t<option value=\"price\">Price</option>";
+page += "\t\t\t\t<option value=\"available\">Available</option>";
+page += "\t\t\t\t<option value=\"forecast\">Forecast</option>";
+page += "\t\t\t</select>";
+page += "\t\t\t<select id=\"stock-mutation\" name=\"stock-mutation\">";
+page += "\t\t\t\t<option value=\"less\">Less than</option>";
+page += "\t\t\t\t<option value=\"equal\">Equals</option>";
+page += "\t\t\t\t<option value=\"more\">more than</option>";
+page += "\t\t\t</select>";
+page += "\t\t\t<select id=\"stock-forecast\" name=\"stock-forecast\" style=\"display: none\">";
+page += "\t\t\t\t<option value=\"poor\">Poor</option>";
+page += "\t\t\t\t<option value=\"average\">Average</option>";
+page += "\t\t\t\t<option value=\"good\">Good</option>";
+page += "\t\t\t</select>";
+page += "\t\t\t<input type=\"text\" name=\"stock-value\" id=\"stock-value\" value=\"0\">";
+page += "\t\t\t<div class=\"btn-wrap silver change\">";
+page += "\t\t\t\t<div class=\"btn\" id=\"stock-market-submit\">";
+// page += "\t\t\t\t\t<input class=\"c-pointer\" type=\"submit\" value=\"CREATE\">";
+page += 'CREATE';
+page += "\t\t\t\t</div>";
+page += "\t\t\t</div>";
+page += "\t\t</form>";
+page += "\t</div>";
+page += "</div>";
+
+// Put 'page' somewhere between similar panes
+$("#management").after(page);
+
+// Add page to settingspage 
+$("li#stock-market").click(function() {
+    console.log("clicked");
+    // Just the fancy click on the left-side menu
+    $("li.ui-tabs-active").removeClass("ui-state-active").removeClass("ui-tabs-active");
+    $("li#stock-market").addClass("ui-tabs-active").addClass("ui-state-active");
+    // Remove current pane and show Stock page
+    $("div.prefs-cont[aria-hidden='false']").css("display", "none").attr("aria-expanded", "false").attr("aria-hidden", "true");
+    $("#stock-market-page").css("display", "table-cell").attr("aria-expanded", "true").attr("aria-hidden", "false");
+    // $("div.prefs-cont[aria-hidden='false']").replaceWith(page);
+    // Bind an eventhandler to the new submit button
+    $("div#stock-market-submit").on("click", clickSubmitButton);
+    // If another link is clicked remove the pane (revert to it's original state)
+    $("li.c-pointer").children("a").click(function() {
+        $("li#stock-market").removeClass("ui-state-active").removeClass("ui-tabs-active");
+        $("#stock-market-page").css("display", "none").attr("aria-expanded", "false").attr("aria-hidden", "true");
+    });
+});
+
+// Toggle menu after forecast is selected. Forecast uses a different sub-menu
+$("#stock-action").change(function() {
+    if ($(this).val() == "forecast") {
+        $("#stock-forecast").css("display", "inline");
+        $("#stock-mutation").css("display", "none");
+        $("#stock-value").css("display", "none");
+    } else {
+        $("#stock-forecast").css("display", "none");
+        $("#stock-mutation").css("display", "inline");
+        $("#stock-value").css("display", "inline");
+    }
+});
+
+// Event handler for clicking Create
+function clickSubmitButton() { 
+    var data = $("#stock-form").serializeArray();
+    // Debug
+    for (var key in data) {
+        // data is an array of  "name" / "value" pairs
+        console.log(data[key]);
+    }
+    // data[0] is name. data[1] is action, data[2] is less/equal/more, 
+    // data[3] is value, data[4] is poor/average/good
+    createAlert(data[0].value, data[1].value, 
+                ((data[1].value === "forecast") ? data[3].value : data[2].value), 
+                ((data[1].value === "forecast") ? "" : data[4].value));
+}
+
+// Here it happens. The alert gets created and stored
+function createAlert(stock, action, mutation, value) {
+    var first = 0;
+    // Manual reset
+    //GM_setValue("stock-alert", "");
+    var stored = GM_getValue("stock-alert");
+    if (stored === "") {
+        // Reset counter
+        GM_setValue("serial", "0");
+        first = 1;
+    }
+    var newAlert = getSerial() + "-" + stock + "-" + action + "-" + 
+        mutation + ((action === "forecast") ? "" : "-" + value);
+    stored = ((first) ? "" : stored + "|") + newAlert;
+    GM_setValue("stock-alert", stored);
+    // Debug
+    console.log(GM_getValue("stock-alert"));
+}
+
+// Get a unique number to distinguish similar looking queries
+function getSerial() {
+    // Manual reset
+    //GM_setValue("serial", "");
+    var serial = GM_getValue("serial");
+    if (serial === "") {
+        serial = "1";
+        GM_setValue("serial", serial);
+    } else {
+        serial = (parseInt(serial)+1).toString();
+        GM_setValue("serial", serial);
+    }
+    console.log("Serial: " + serial);
+    return serial;
+}
+
+// Done creating alerts. Now retreive them
+function processAlerts() {
+    var text, st;
+
+    // Stored alerts
+    var alerts = GM_getValue("stock-alert");
+    console.log(GM_getValue("stock-alert"));
+    // String split() gets individual alerts
+    var alertsInArray = alerts.split("|");
+    for (var alert in alertsInArray) {
+        // Split the alert to get hte data
+        // Example [4,YAZ,available,more,0]
+        var al = alertsInArray[alert].split("-");
+        // Get stock data for this stock
+        var stId = stockId[al[1]];
+        st = stocks[stId];
+        // Switch over action 'price', 'available', 'forecast'
+        switch (al[2]) {
+            case "price":
+                switch (al[3]) {
+                    case "less":
+                        // if (stock[name][current_value] < value) { ... }
+                        if (st[3] < al[4]) {
+                            // Print banner
+                            text = al[1] + " - The price of " + st[1] + " is less than " + al[4] + ".";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } // if
+                        }  // if
+                        break;
+                    case "equal":
+                        // Won't happen. Skip
+                        break;
+                    case "more":
+                        // if (stock[name][current_value] > value) { ... }
+                        if (st[3] < al[4]) {
+                            // Print banner
+                            text = al[1] + " - The price of " + st[1] + " is greater than " + al[4] + ".";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } // if
+                        }  // if
+                        break;
+                }
+                break;
+            case "available":
+                switch (al[3]) {
+                    case "less":
+                        // if (stock[name][available_share] < available) { ... }
+                        if (st[4] < al[4]) {
+                            // Print banner
+                            text = al[1] + " - There are less than " + al[4] + " shares in " + st[1] + " available.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } // if
+                        }  // if
+                        break;
+                    case "equal":
+                        // if (stock[name][available_share] == available) { ... }
+                        if (st[4] == al[4]) {
+                            // Print banner
+                            text = al[1] + " - There are exactly " + al[4] + " shares in " + st[1] + " available.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } // if
+                        }  // if
+                        break;
+                    case "more":
+                        // if (stock[name][available_share] > available) { ... }
+                        console.log("st[4] > al[4]: " + st[4] + " > " + al[4]);
+                        if (st[4] > al[4]) {
+                            // Print banner
+                            text = al[1] + " - There more than " + al[4] + " shares in " + st[1] + " available.";
+                            if ($("h4.left:contains('Home')").text().length) {
+                                $("hr.page-head-delimiter:first").notify(text);
+                            } // if
+                        }  // if
+                        break;
+                } // most inner switch
+                break;
+            case "forecast":
+                console.log("al[3]: " + al[3]);
+                switch (al[3]) {
+                    case "poor":
+                        // Print banner
+                        text = al[1] + " - Forecast for " + st[1] + " is poor.";
+                        if ($("h4.left:contains('Home')").text().length) {
+                            $("hr.page-head-delimiter:first").notify(text);
+                        } // if
+                        break;
+                    case "average":
+                        // Print banner
+                        text = al[1] + " - Forecast for " + st[1] + " is average.";
+                        if ($("h4.left:contains('Home')").text().length) {
+                            $("hr.page-head-delimiter:first").notify(text);
+                        } // if
+                        break;
+                    case "good":
+                        // Print banner
+                        text = al[1] + " - Forecast for " + st[1] + " is good.";
+                        if ($("h4.left:contains('Home')").text().length) {
+                            $("hr.page-head-delimiter:first").notify(text);
+                        } // if
+                        break;
+                } // most inner switch
+                break;
+        } // outer most switch
+    } // for loop
+}
+    
