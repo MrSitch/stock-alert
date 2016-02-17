@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.2
+// @version      0.7.3
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -40,7 +40,28 @@
 // Bug Jerry: No banners on events page <-- @FIXED?
 // Bug Jerry: Duplicate banners after opening several pages
 
-var versionString = "0.7.2";
+/*
+Jerry: will do
+Jerry: btw
+Jerry: its funny
+Jerry: im flying
+Jerry: but i can still see alerts if i go to events
+Jerry: so i guess alerts sort of work while traveling but you gotta go to events
+Afwas: OK I'll look into that.
+Jerry: hey
+Jerry: alerts work now while flying too
+Jerry: but doesnt seem like alerts
+Jerry: refreshing either
+Jerry: http://puu.sh/naWVh/11df6a9b69.png
+Jerry: alerts are appearing more than once
+Jerry: http://puu.sh/naWWx/33cf36036d.png
+Jerry: it seems to happen after i open events in a new tab, and then close it
+Jerry: refreshing fixes it
+Jerry: i can duplicate this by going to the portfolio too while traveling
+Jerry: and alerts still dont refresh on their own
+*/
+
+var versionString = "0.7.3";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -69,10 +90,13 @@ var stocks = [];
 var newData = 1;
 var refresh = 0;
 function getStocks() {
-    $.get( 
-        stockUrl,
-        function( data ) {
+    $.ajax({
+        // Append timestring to url to prevent caching
+        url: stockUrl, // + "?" + new Date().getTime().toString(),
+        cache: false,
+        success: function( data ) {
             // data is already an object
+            stocks = [];
             for(var key in data.stocks) {
                 if (key == 25) {
                     stocks.push(["FOO", "Foo", 0, 0.0, "Average"]);
@@ -89,7 +113,8 @@ function getStocks() {
                 
                 newData = 0;
             }
-        });
+        }
+    });
 }
 getStocks();
 
@@ -145,6 +170,21 @@ function placeBanner(message) {
             $("hr.page-head-delimiter:first").notify(message);
         }
     }
+}
+
+// Utility function
+// https://stackoverflow.com/questions/5731193/how-to-format-numbers-using-javascript
+function formatNumber(number)
+{
+    number = number.toFixed(2) + '';
+    var x = number.split('.');
+    var x1 = x[0];
+    var x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
 }
 
 var stockId = {"TCSE": "0",
@@ -466,7 +506,7 @@ function processAlerts() {
                         // if (stock[name][current_value] < value) { ... }
                         if (parseFloat(st[2]) < parseFloat(al[4])) {
                             // Print banner
-                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " )  is less than " + al[4] + ".";
+                            text = al[1] + " - The price of " + st[1] + " (TC$ " + formatNumber(st[2]) + " )  is less than " + formatNumber(al[4]) + ".";
                             placeBanner(text);
                         }
                         break;
@@ -477,7 +517,7 @@ function processAlerts() {
                         // if (stock[name][current_value] > value) { ... }
                         if (parseFloat(st[2]) > parseFloat(al[4])) {
                             // Print banner
-                            text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " ) is greater than " + al[4] + ".";
+                            text = al[1] + " - The price of " + st[1] + " (TC$ " + formatNumber(st[2]) + " ) is greater than " + formatNumber(al[4]) + ".";
                             placeBanner(text);
                         }
                         break;
@@ -492,7 +532,7 @@ function processAlerts() {
                         // if (stock[name][available_share] < available) { ... }
                         if (parseInt(st[3]) < parseInt(al[4])) {
                             // Print banner
-                            text = al[1] + " - There are less than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
+                            text = al[1] + " - There are less than " + formatNumber(al[4]) + " (" + formatNumber(st[4]) + ") shares in " + st[1] + " available.";
                             placeBanner(text);
                         }
                         break;
@@ -500,7 +540,7 @@ function processAlerts() {
                         // if (stock[name][available_share] == available) { ... }
                         if (parseInt(st[3]) === parseInt(al[4])) {
                             // Print banner
-                            text = al[1] + " - There are exactly " + al[4] + " shares in " + st[1] + " available.";
+                            text = al[1] + " - There are exactly " + formatNumber(al[4]) + " shares in " + st[1] + " available.";
                             placeBanner(text);
                         }
                         break;
@@ -509,7 +549,7 @@ function processAlerts() {
                         // 
                         if (parseInt(st[3]) > parseInt(al[4])) {
                             // Print banner
-                            text = al[1] + " - There more than " + al[4] + " (" + st[3] + ") shares in " + st[1] + " available.";
+                            text = al[1] + " - There more than " + formatNumber(al[4]) + " (" + formatNumber(st[3]) + ") shares in " + st[1] + " available.";
                             placeBanner(text);
                         }
                         break;
