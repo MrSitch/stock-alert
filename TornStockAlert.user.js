@@ -35,7 +35,7 @@
 // @TODO US server
 // @TODO Test API key
 // Feature request Nash: Mobile!
-// Bug Jerry: Banners not refreshing when not on Home page <-- @DONE @NEEDFIX
+// Bug Jerry: Banners not refreshing when not on Home page <-- @DONE
 // Bug Jerry / Afwas: data got cached insted of being refreshed <-- @DONE
 // Bug Jerry: No banners on events page <-- @FIXED?
 // Bug Jerry: Duplicate banners after opening several pages
@@ -176,7 +176,8 @@ function placeBanner(message) {
 // https://stackoverflow.com/questions/5731193/how-to-format-numbers-using-javascript
 function formatNumber(number)
 {
-    number = number.toFixed(2) + '';
+    // number = number.toFixed(2) + '';
+    number = number + '';
     var x = number.split('.');
     var x1 = x[0];
     var x2 = x.length > 1 ? '.' + x[1] : '';
