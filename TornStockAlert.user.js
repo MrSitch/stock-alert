@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.1
+// @version      0.7.2
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -35,10 +35,12 @@
 // @TODO US server
 // @TODO Test API key
 // Feature request Nash: Mobile!
-// Bug Jerry: Banners not refreshing when not on Home page <-- @DONE
+// Bug Jerry: Banners not refreshing when not on Home page <-- @DONE @NEEDFIX
 // Bug Jerry / Afwas: data got cached insted of being refreshed <-- @DONE
+// Bug Jerry: No banners on events page <-- @FIXED?
+// Bug Jerry: Duplicate banners after opening several pages
 
-var versionString = "0.7.1";
+var versionString = "0.7.2";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -82,7 +84,9 @@ function getStocks() {
             newData = checkNewData();
             console.log( getTime() + " Checked newData. newData is : " + newData);
             if (!refresh || newData) {
+                $(".stock-alert").remove();
                 processAlerts();
+                
                 newData = 0;
             }
         });
@@ -505,7 +509,7 @@ function processAlerts() {
                         // 
                         if (parseInt(st[3]) > parseInt(al[4])) {
                             // Print banner
-                            text = al[1] + " - There more than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
+                            text = al[1] + " - There more than " + al[4] + " (" + st[3] + ") shares in " + st[1] + " available.";
                             placeBanner(text);
                         }
                         break;
@@ -569,7 +573,7 @@ window.setInterval(function() {
     // newData = checkNewData();
     console.log(getTime() + " Auto-refresh");
     if (newData) {
-        $(".stock-alert").remove();
+        // $(".stock-alert").remove();
         console.log(getTime() + " New data! Refreshing now");
     }
 }, interval);
