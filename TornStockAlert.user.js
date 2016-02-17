@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7
+// @version      0.7.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
 // @match        http://www.torn.com/*
+// @match        https://www.torn.com/*
 // @match        http://www.torn.com/preferences.php*
 // @match        https://www.torn.com/index.php
 // @match        https://www.torn.com/preferences.php*
@@ -33,8 +34,11 @@
 // Feature request Afwas: Working on alert if there's a new version of this script
 // @TODO US server
 // @TODO Test API key
+// Feature request Nash: Mobile!
+// Bug Jerry: Banners not refreshing when not on Home page <-- @DONE
+// Bug Jerry / Afwas: data got cached insted of being refreshed <-- @DONE
 
-var versionString = "0.7";
+var versionString = "0.7.1";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -50,13 +54,21 @@ var stockUrl = stockUrl1;
 // The stockmarket seems to refresh just after 00, 15, 30, 45 minutes every hour.
 var interval = 60;
 
+function getTime() {
+    var now = new Date().toISOString().slice(11, -1);
+    return now;
+}   
+
+// Prevent caching
+$.ajaxSetup({ cache: false });
+
 // The JSON needs to be retreived. Might as well do it here and now
 var stocks = [];
 var newData = 1;
 var refresh = 0;
 function getStocks() {
     $.get( 
-        stockUrl, 
+        stockUrl,
         function( data ) {
             // data is already an object
             for(var key in data.stocks) {
@@ -67,6 +79,8 @@ function getStocks() {
             }
             // If a page is new loaded refresh is 0 --> Add the banners
             // newData denotes a change in data from the servers. Go refresh!
+            newData = checkNewData();
+            console.log( getTime() + " Checked newData. newData is : " + newData);
             if (!refresh || newData) {
                 processAlerts();
                 newData = 0;
@@ -80,12 +94,14 @@ function checkNewData() {
     // Check 'random' shares
     var change = 0;
     var TCP = GM_getValue("TCP", 0.0);
-    if (TCP != stocks[stockId.TCP][2]) {
+    console.log("TCP old: " + TCP + ". TCP new:  " + stocks[stockId.TCP][2]);
+    if (parseFloat(TCP) !== parseFloat(stocks[stockId.TCP][2])) {
         GM_setValue("TCP", stocks[stockId.TCP][2]);
         change = 1;
     }
     var FHG = GM_getValue("FHG", 0.0);
-    if (FHG != stocks[stockId.FHG][2]) {
+    console.log("FHG old: " + FHG + ". FHG new:  " + stocks[stockId.FHG][2]);
+    if (parseFloat(FHG) !== parseFloat(stocks[stockId.FHG][2])) {
         GM_setValue("FHG", stocks[stockId.FHG][2]);
         change = 1;
     }
@@ -448,8 +464,6 @@ function processAlerts() {
                             // Print banner
                             text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " )  is less than " + al[4] + ".";
                             placeBanner(text);
-                        } else {
-                            console.log("Mismatch st[2] < al[4]: " + st[2] + " < " + al[4]);
                         }
                         break;
                     case "equal":
@@ -461,8 +475,6 @@ function processAlerts() {
                             // Print banner
                             text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " ) is greater than " + al[4] + ".";
                             placeBanner(text);
-                        } else {
-                            console.log("Mismatch st[2] > al[4]: " + st[2] + " > " + al[4]);
                         }
                         break;
                     default:
@@ -478,8 +490,6 @@ function processAlerts() {
                             // Print banner
                             text = al[1] + " - There are less than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
                             placeBanner(text);
-                        }else {
-                            console.log("Mismatch st[4] < al[4]: " + st[3] + " < " + al[4]);
                         }
                         break;
                     case "equal":
@@ -488,8 +498,6 @@ function processAlerts() {
                             // Print banner
                             text = al[1] + " - There are exactly " + al[4] + " shares in " + st[1] + " available.";
                             placeBanner(text);
-                        }else {
-                            console.log("Mismatch st[4] === al[4]: " + st[3] + " === " + al[4]);
                         }
                         break;
                     case "more":
@@ -499,8 +507,6 @@ function processAlerts() {
                             // Print banner
                             text = al[1] + " - There more than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
                             placeBanner(text);
-                        } else {
-                            console.log("Mismatch st[4] > al[4]: " + st[3] + " > " + al[4]);
                         }
                         break;
                     default:
@@ -534,7 +540,7 @@ function processAlerts() {
                     case "good":
                         if (st[4] === "Good") {
                             // Print banner
-                            console.log("al[3] should be \"good\": " + al[3]);
+
                             text = al[1] + " - Forecast for " + st[1] + " is GOOD.";
                             placeBanner(text);
                         }
@@ -542,7 +548,6 @@ function processAlerts() {
                     case "verygood":
                         if (st[4] === "Very Good") {
                             // Print banner
-                            console.log("al[3] should be \"good\": " + al[3]);
                             text = al[1] + " - Forecast for " + st[1] + " is VERY GOOD.";
                             placeBanner(text);
                         }
@@ -559,13 +564,12 @@ function processAlerts() {
 
 interval = interval * 1000;
 window.setInterval(function() {
-    if (window.location.pathname == "/index.php") {
-        refresh = 1;
-        newData = checkNewData();
-        console.log("Auto-refresh");
-        if (newData) {
-            $(".stock-alert").remove();
-        }
-        getStocks();
+    refresh = 1;
+    getStocks();
+    // newData = checkNewData();
+    console.log(getTime() + " Auto-refresh");
+    if (newData) {
+        $(".stock-alert").remove();
+        console.log(getTime() + " New data! Refreshing now");
     }
 }, interval);
