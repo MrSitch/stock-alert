@@ -2,9 +2,11 @@
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
 // @version      0.6.1
+// @resource     version 0.6.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
+// @match        http://www.torn.com/*
 // @match        http://www.torn.com/preferences.php*
 // @match        https://www.torn.com/index.php
 // @match        https://www.torn.com/preferences.php*
@@ -12,22 +14,28 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_log
+// @grant        GM_getResourceText
 // ==/UserScript==
 /* jshint -W097 */
 /*global
-   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert
+   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText
  */
 'use strict';
 
 // Feature request Nash: time every 15 minutes a few seconds after 13, 28, 43 and 58
-// Feature request Nash: Show on all pages
+// Feature request Nash: Show on all pages <-- @DONE
 // Bug Hank: very good and very poor forecast <-- @DONE
 // Feature request Afwas: Add demand
-// Bug BraveKath: Remove the last alert from settings <-- @CONFIRMED
-// Bug decap101: Removing more than one alert doesn't work <-- @CONFIRMED
+// Bug BraveKath: Remove the last alert from settings <-- @DONE
+// Bug decap101: Removing more than one alert doesn't work <-- @DONE
 // Bug decap101: Wrong data for stock, picks wrong stock. <-- @SEVERE @DONE
 // Feature request ?? : Firefox / Greasemonkey <-- @DONE
 // Bug decap101: Missing SYS in list <-- @DONE
+// Feature request Afwas: Working on alert if there's a new version of this script
+// @TODO US server
+// @TODO Test API key
+
+var versionString = "0.7";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -86,6 +94,15 @@ function checkNewData() {
     return change;
 }
 
+// Work In Progress. Working on a method to alert when there is a new
+// version of this script
+function checkUpdate() {
+    versionString = "1" + versionString.toString();
+    var version = versionString.replace(/\./g, "0");
+    console.log("Version: " + version);
+}
+checkUpdate();
+
 // Notify adds the cool banner to the top of page index,php
 $.fn.notify = function(message) {
     var pre = "<div class=\"info-msg-cont green border-round m-top10 stock-alert\">";
@@ -98,10 +115,18 @@ $.fn.notify = function(message) {
     return this;
 };
 
-// Test notify
-/* if ($("h4.left:contains('Home')").text().length) {
-    $("hr.page-head-delimiter:first").notify("Hello World!");
-} */
+function placeBanner(message) {
+    // If "checked" then banners are shown on all pages
+    // Defaults to Home page only
+    selected = GM_getValue("toggle-selected", "");
+    if (selected === "checked") {
+        $(".page-head-delimiter:first").notify(message);
+    } else {
+        if ($("h4.left:contains('Home')").text().length) {
+            $("hr.page-head-delimiter:first").notify(message);
+        }
+    }
+}
 
 var stockId = {"TCSE": "0",
                "TSBC": "1",
@@ -144,6 +169,10 @@ $(".headers").children("div.clear").before("<li class=\"delimiter\"></li>\n"+
                                            "id=\"stock-market\">\n"+
                                            "<a class=\"t-gray-6 bold h stock-market\">Stock Market Alerts</a>\n"+
                                            "</li>");
+
+// Selector to toggle showing on very page
+// selected is ["checked" | ""]
+var selected = GM_getValue("toggle-selected", "");
 
 // Create settings page/pane for stocks
 var page = "</div><div id=\"stock-market-page\" class=\"prefs-cont left ui-tabs-panel ";
@@ -210,13 +239,29 @@ page += "\t\t\t\t<div class=\"btn\" id=\"stock-market-submit\">";
 page += 'CREATE';
 page += "\t\t\t\t</div>";
 page += "\t\t\t</div>";
+page += "\t\t\t<div>";
+page += "\t\t\t\t<br><input type=\"checkbox\" name=\"city-wide\" value=\"city-wide\" " + selected + "> Check this if you want the banner throughout the city.";
+page += "\t\t\t</div>";
 page += "\t\t</form>";
 page += "\t</div>";
 page += "</div>";
 
 // Put 'page' somewhere between similar panes
 $("#management").after(page);
-// Add alerts
+
+$("input:checkbox[name='city-wide']").change(function() {
+    // New state
+    console.log("Checkbox changed");
+    if(this.checked) {
+        GM_setValue("toggle-selected", "checked");
+        selected = "checked";
+    } else {
+        GM_setValue("toggle-selected", "");
+        selected = "";
+    }
+});
+
+// Add alerts. This is for page-load
 addAlertsToSettings();
 
 // Add page to settingspage 
@@ -239,6 +284,7 @@ $("li#stock-market").click(function() {
 
 // Add existing alerts to settings page
 function addAlertsToSettings() {
+    // Use .detach() here? .empty() kills the eventhandler
     $("ul#stock-alert-list").empty();
     // This first part is identical to processAlerts()
     var alerts = GM_getValue("stock-alert", "");
@@ -267,18 +313,21 @@ function addAlertsToSettings() {
             "<li id=\"stock" + alert[0] + "\">" + str + "</li>"
          );
     }
+    // Adds an eventListener to the list
+    // Remove an alert by clicking on it in settings
+    $("ul#stock-alert-list").children().click(function() {
+        var id = $(this).attr("id");
+        // get the number
+        id = id.substr(5);
+        console.log("id: " + id);
+        // Remove alert from list; store new list
+        removeAlert(id);
+        // Append the new list to the <ul>
+        addAlertsToSettings();
+    });
 }
     
-// Remove an alert by clicking on it in settings
-$("ul#stock-alert-list").children().click(function() {
-    var id = $(this).attr("id");
-    // get the number
-    id = id.substr(5);
-    // Remove alert from list; store new list
-    removeAlert(id);
-    // Append the new list to the <ul>
-    addAlertsToSettings();
-});
+
 
 function removeAlert(id) {
     var newAlerts = "";
@@ -299,8 +348,8 @@ function removeAlert(id) {
                 newAlerts += "|" + alertsInArray[alertKey];
             }
         }
-        GM_setValue("stock-alert", newAlerts);
     }
+    GM_setValue("stock-alert", newAlerts);
 }
 
 
@@ -375,7 +424,6 @@ function processAlerts() {
 
     // Stored alerts
     var alerts = GM_getValue("stock-alert", "");
-    console.log(GM_getValue("stock-alert", ""));
     // String split() gets individual alerts
     if (alerts === "") {
         // Nothing to do
@@ -400,9 +448,7 @@ function processAlerts() {
                         if (parseFloat(st[2]) < parseFloat(al[4])) {
                             // Print banner
                             text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " )  is less than " + al[4] + ".";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } // if
+                            placeBanner(text);
                         } else {
                             console.log("Mismatch st[2] < al[4]: " + st[2] + " < " + al[4]);
                         }
@@ -415,9 +461,7 @@ function processAlerts() {
                         if (parseFloat(st[2]) > parseFloat(al[4])) {
                             // Print banner
                             text = al[1] + " - The price of " + st[1] + " (TC$ " + st[2] + " ) is greater than " + al[4] + ".";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } // if
+                            placeBanner(text);
                         } else {
                             console.log("Mismatch st[2] > al[4]: " + st[2] + " > " + al[4]);
                         }
@@ -434,9 +478,7 @@ function processAlerts() {
                         if (parseInt(st[3]) < parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There are less than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } // if
+                            placeBanner(text);
                         }else {
                             console.log("Mismatch st[4] < al[4]: " + st[3] + " < " + al[4]);
                         }
@@ -446,9 +488,7 @@ function processAlerts() {
                         if (parseInt(st[3]) === parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There are exactly " + al[4] + " shares in " + st[1] + " available.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } // if
+                            placeBanner(text);
                         }else {
                             console.log("Mismatch st[4] === al[4]: " + st[3] + " === " + al[4]);
                         }
@@ -459,9 +499,7 @@ function processAlerts() {
                         if (parseInt(st[3]) > parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There more than " + al[4] + "/" + st[4] + " shares in " + st[1] + " available.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } // if
+                            placeBanner(text);
                         } else {
                             console.log("Mismatch st[4] > al[4]: " + st[3] + " > " + al[4]);
                         }
@@ -477,33 +515,21 @@ function processAlerts() {
                         if (st[4] === "Very Poor") {
                             // Print banner
                             text = al[1] + " - Forecast for " + st[1] + " is VERY POOR.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } else {
-                                console.log("Mismatch st[4] <-> \"Very Poor\": " + st[4] + " <-> " + "Very Poor");
-                            }
+                            placeBanner(text);
                         }
                         break;
                     case "poor":
                         if (st[4] === "Poor") {
                             // Print banner
                             text = al[1] + " - Forecast for " + st[1] + " is POOR.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } else {
-                                console.log("Mismatch st[4] <-> \"Poor\": " + st[4] + " <-> " + "Poor");
-                            }
+                            placeBanner(text);
                         }
                         break;
                     case "average":
                         if(st[4] === "Average") {
                             // Print banner
                             text = al[1] + " - Forecast for " + st[1] + " is AVERAGE.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } else {
-                                console.log("Mismatch st[4] <-> \"Average\": " + st[4] + " <-> " + "Average");
-                            }
+                            placeBanner(text);
                         }
                         break;
                     case "good":
@@ -511,11 +537,7 @@ function processAlerts() {
                             // Print banner
                             console.log("al[3] should be \"good\": " + al[3]);
                             text = al[1] + " - Forecast for " + st[1] + " is GOOD.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } else {
-                                console.log("Mismatch st[4] <-> \"Good\": " + st[4] + " <-> " + "Good");
-                            }
+                            placeBanner(text);
                         }
                         break;
                     case "verygood":
@@ -523,11 +545,7 @@ function processAlerts() {
                             // Print banner
                             console.log("al[3] should be \"good\": " + al[3]);
                             text = al[1] + " - Forecast for " + st[1] + " is VERY GOOD.";
-                            if ($("h4.left:contains('Home')").text().length) {
-                                $("hr.page-head-delimiter:first").notify(text);
-                            } else {
-                                console.log("Mismatch st[4] <-> \"Very Good\": " + st[4] + " <-> " + "Very Good");
-                            }
+                            placeBanner(text);
                         }
                         break;
                     default:
