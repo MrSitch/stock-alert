@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.3
+// @version      0.7.5
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -61,7 +61,7 @@ Jerry: i can duplicate this by going to the portfolio too while traveling
 Jerry: and alerts still dont refresh on their own
 */
 
-var versionString = "0.7.3";
+var versionString = "0.7.5";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -112,6 +112,9 @@ function getStocks() {
                 processAlerts();
                 
                 newData = 0;
+            }
+            if (GM_getValue("toggle-color", "checked") === "checked") {
+                addColorToStockMarket();
             }
         }
     });
@@ -233,6 +236,7 @@ $(".headers").children("div.clear").before("<li class=\"delimiter\"></li>\n"+
 // Selector to toggle showing on very page
 // selected is ["checked" | ""]
 var selected = GM_getValue("toggle-selected", "");
+var addColor = GM_getValue("toggle-color", "checked");
 
 // Create settings page/pane for stocks
 var page = "</div><div id=\"stock-market-page\" class=\"prefs-cont left ui-tabs-panel ";
@@ -302,6 +306,9 @@ page += "\t\t\t</div>";
 page += "\t\t\t<div>";
 page += "\t\t\t\t<br><input type=\"checkbox\" name=\"city-wide\" value=\"city-wide\" " + selected + "> Check this if you want the banner throughout the city.";
 page += "\t\t\t</div>";
+page += "\t\t\t<div>";
+page += "\t\t\t\t<br><input type=\"checkbox\" name=\"color\" value=\"color\" " + addColor + "> Check this if you want colors on the Stock Market page.";
+page += "\t\t\t</div>";
 page += "\t\t</form>";
 page += "\t</div>";
 page += "</div>";
@@ -318,6 +325,17 @@ $("input:checkbox[name='city-wide']").change(function() {
     } else {
         GM_setValue("toggle-selected", "");
         selected = "";
+    }
+});
+
+$("input:checkbox[name='color']").change(function() {
+    // New state
+    if(this.checked) {
+        GM_setValue("toggle-color", "checked");
+        addColor = "checked";
+    } else {
+        GM_setValue("toggle-color", "");
+        addColor = "";
     }
 });
 
@@ -387,8 +405,6 @@ function addAlertsToSettings() {
     });
 }
     
-
-
 function removeAlert(id) {
     var newAlerts = "";
     // This first part is identical to processAlerts()
@@ -411,7 +427,6 @@ function removeAlert(id) {
     }
     GM_setValue("stock-alert", newAlerts);
 }
-
 
 // Toggle menu after forecast is selected. Forecast uses a different sub-menu
 $("#stock-action").change(function() {
@@ -618,3 +633,53 @@ window.setInterval(function() {
         console.log(getTime() + " New data! Refreshing now");
     }
 }, interval);
+
+var colors = {
+    "veryPoor": "#F6CECE",
+    "poor": "#CEECF5",
+    "good": "#F5F6CE",
+    "veryGood": "#D8F6CE"
+};
+
+function addColorToStockMarket() {
+    if (window.location.href.indexOf("stockexchange.php?step=portfolio") > -1) {
+        $("li.item-wrap").each(function() {
+            var stock = $(this).attr("data-stock").toUpperCase();
+            var forecast = stocks[parseInt(stockId[stock])][4];
+            switch (forecast) {
+                case "Very Good":
+                    $(this).css("background-color", colors.veryGood);
+                    break;
+                case "Good":
+                    $(this).css("background-color", colors.good);
+                    break;
+                case "Poor":
+                    $(this).css("background-color", colors.poor);
+                    break;
+                case "Very Poor":
+                    $(this).css("background-color", colors.veryPoor);
+                    break;
+            }
+        });
+    }
+    if (window.location.href.endsWith("stockexchange.php")) {
+        $("li.item").each(function() {
+            var stock = $(this).find("div.abbr-name.d-hide").text();
+            var forecast = stocks[parseInt(stockId[stock])][4];
+            switch (forecast) {
+                case "Very Good":
+                    $(this).css("background-color", colors.veryGood);
+                    break;
+                case "Good":
+                    $(this).css("background-color", colors.good);
+                    break;
+                case "Poor":
+                    $(this).css("background-color", colors.poor);
+                    break;
+                case "Very Poor":
+                    $(this).css("background-color", colors.veryPoor);
+                    break;
+            }
+        });
+    }   
+}
