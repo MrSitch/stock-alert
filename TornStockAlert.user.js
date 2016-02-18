@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.8
+// @version      0.7.8.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -42,7 +42,7 @@
 // Bug Jerry: No banners on events page <-- @FIXED?
 // Bug Jerry: Duplicate banners after opening several pages
 
-var versionString = "0.7.8";
+var versionString = "0.7.8.1";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -775,28 +775,28 @@ function addColorToStockMarket() {
             switch (forecast) {
                 case "Very Good":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.veryGoodUnavailable);
+                        $(this).css("background-color", colors.veryGoodUnavailable);
                     } else {
                         $(this).css("background-color", colors.veryGood);
                     }
                     break;
                 case "Good":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.goodUnavailable);
+                        $(this).css("background-color", colors.goodUnavailable);
                     } else {
                         $(this).css("background-color", colors.good);
                     }
                     break;
                 case "Poor":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.poorUnavailable);
+                        $(this).css("background-color", colors.poorUnavailable);
                     } else {
                         $(this).css("background-color", colors.poor);
                     }
                     break;
                 case "Very Poor":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.veryPoorUnavailable);
+                        $(this).css("background-color", colors.veryPoorUnavailable);
                     } else {
                         $(this).css("background-color", colors.veryPoor);
                     }
