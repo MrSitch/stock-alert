@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.5
+// @version      0.7.8
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -15,10 +15,12 @@
 // @grant        GM_getValue
 // @grant        GM_log
 // @grant        GM_getResourceText
+// @grant        GM_xmlhttpRequest
+// @license      GPL v2 or higher. See https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 // ==/UserScript==
 /* jshint -W097 */
 /*global
-   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText
+   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText, GM_xmlhttpRequest
  */
 'use strict';
 
@@ -40,28 +42,7 @@
 // Bug Jerry: No banners on events page <-- @FIXED?
 // Bug Jerry: Duplicate banners after opening several pages
 
-/*
-Jerry: will do
-Jerry: btw
-Jerry: its funny
-Jerry: im flying
-Jerry: but i can still see alerts if i go to events
-Jerry: so i guess alerts sort of work while traveling but you gotta go to events
-Afwas: OK I'll look into that.
-Jerry: hey
-Jerry: alerts work now while flying too
-Jerry: but doesnt seem like alerts
-Jerry: refreshing either
-Jerry: http://puu.sh/naWVh/11df6a9b69.png
-Jerry: alerts are appearing more than once
-Jerry: http://puu.sh/naWWx/33cf36036d.png
-Jerry: it seems to happen after i open events in a new tab, and then close it
-Jerry: refreshing fixes it
-Jerry: i can duplicate this by going to the portfolio too while traveling
-Jerry: and alerts still dont refresh on their own
-*/
-
-var versionString = "0.7.5";
+var versionString = "0.7.8";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -80,7 +61,12 @@ var interval = 60;
 function getTime() {
     var now = new Date().toISOString().slice(11, -1);
     return now;
-}   
+}
+
+function getDate() {
+    var now = new Date().toISOString().slice(0, 10);
+    return now;
+}    
 
 // Prevent caching
 $.ajaxSetup({ cache: false });
@@ -106,16 +92,42 @@ function getStocks() {
             // If a page is new loaded refresh is 0 --> Add the banners
             // newData denotes a change in data from the servers. Go refresh!
             newData = checkNewData();
-            console.log( getTime() + " Checked newData. newData is : " + newData);
+            // console.log( getTime() + " Checked newData. newData is : " + newData);
             if (!refresh || newData) {
                 $(".stock-alert").remove();
                 processAlerts();
-                
                 newData = 0;
             }
             if (GM_getValue("toggle-color", "checked") === "checked") {
                 addColorToStockMarket();
             }
+            experimental = GM_getValue("toggle-experimental", "");
+            if (experimental === "checked") {
+                // this is a rather dirty hack. I offer 100M if you can come up with
+                // a *WORKING* solution to add the banners to pages or elements that
+                // are loaded AFTER the DOM. Examples of those pages: forums, laptop.
+                selected = GM_getValue("toggle-selected", "");
+                if (selected === "checked") {
+                    window.setTimeout(function() {
+                        $(".stock-alert").remove();
+                        processAlerts();
+                        $("h4").click(function() {
+                            $(".stock-alert").remove();
+                            processAlerts();
+                        });
+                    }, 2000);
+                    if (window.location.href.indexOf("/laptop.php") > -1) {
+                        setInterval(function() {
+                            $(".stock-alert").remove();
+                            processAlerts();
+                            $("h4").click(function() {
+                                $(".stock-alert").remove();
+                                processAlerts();
+                            });
+                        }, 2000);
+                    }
+                }
+            } // End experimental
         }
     });
 }
@@ -126,13 +138,11 @@ function checkNewData() {
     // Check 'random' shares
     var change = 0;
     var TCP = GM_getValue("TCP", 0.0);
-    console.log("TCP old: " + TCP + ". TCP new:  " + stocks[stockId.TCP][2]);
     if (parseFloat(TCP) !== parseFloat(stocks[stockId.TCP][2])) {
         GM_setValue("TCP", stocks[stockId.TCP][2]);
         change = 1;
     }
     var FHG = GM_getValue("FHG", 0.0);
-    console.log("FHG old: " + FHG + ". FHG new:  " + stocks[stockId.FHG][2]);
     if (parseFloat(FHG) !== parseFloat(stocks[stockId.FHG][2])) {
         GM_setValue("FHG", stocks[stockId.FHG][2]);
         change = 1;
@@ -141,14 +151,56 @@ function checkNewData() {
     return change;
 }
 
-// Work In Progress. Working on a method to alert when there is a new
+// A method to alert when there is a new
 // version of this script
 function checkUpdate() {
-    versionString = "1" + versionString.toString();
-    var version = versionString.replace(/\./g, "0");
-    console.log("Version: " + version);
+    var url = "https://github.com/Afwas/stock-alert/raw/master/TornStockAlert.user.js";
+    GM_xmlhttpRequest({
+        method: "GET",
+        url: url,
+        onload: function(response) {
+            var vline;
+            var lines =  response.responseText.split('\n');
+            for(var i = 0;  i < lines.length; i++){
+                vline = lines[i].match(/^var versionString/);
+                if (vline) {
+                    vline = lines[i];
+                    break;
+                }
+            }
+            var version = vline.match(/[\d\.]/g);
+            console.log("version: " + version);
+            var versionStringMod = String(versionString).replace(/\./g, ",.,");
+            var versionArray = versionStringMod.split(',');
+            console.log("versionArray: " + versionArray);
+            // Default:
+            GM_setValue("version-check", getDate() + "|0");
+            for (i = 0; i < version.length; i++) {
+                if (version[i] === ".") {
+                    continue;
+                }
+                var temp = "Comparing " + version[i] + " > " + versionArray[i] + ": ";
+                // i > versionArray.length means the new version has a sub-version-number
+                if (i > versionArray.length || version[i] > versionArray[i]) {
+                    console.log(temp); console.log(version[i] > versionArray[i]);
+                    $("h4").parent().notify(
+                        "There is a new version of the Stock Market Alert script available <a href=\"" + 
+                        url + "\">here</a>.");
+                    GM_setValue("version-check", getDate() + "|1");
+                    break;
+                }
+                console.log(temp); console.log(version[i] > versionArray[i]);
+            }
+        }
+    });
 }
-checkUpdate();
+var checkedToday = GM_getValue("version-check", "0|1");
+console.log("GM_getValue(\"version-check\"]: " + GM_getValue("version-check", "0|1"));
+var todayCheck = checkedToday.split("|");
+if (todayCheck[0] < getDate() || todayCheck[1] === "1") {
+    checkUpdate();
+}
+
 
 // Notify adds the cool banner to the top of page index,php
 $.fn.notify = function(message) {
@@ -167,10 +219,10 @@ function placeBanner(message) {
     // Defaults to Home page only
     selected = GM_getValue("toggle-selected", "");
     if (selected === "checked") {
-        $(".page-head-delimiter:first").notify(message);
+           $("h4").parent().notify(message);
     } else {
         if ($("h4.left:contains('Home')").text().length) {
-            $("hr.page-head-delimiter:first").notify(message);
+            $("h4").parent().notify(message);
         }
     }
 }
@@ -237,6 +289,7 @@ $(".headers").children("div.clear").before("<li class=\"delimiter\"></li>\n"+
 // selected is ["checked" | ""]
 var selected = GM_getValue("toggle-selected", "");
 var addColor = GM_getValue("toggle-color", "checked");
+var experimental = GM_getValue("toggle-experimental", "");
 
 // Create settings page/pane for stocks
 var page = "</div><div id=\"stock-market-page\" class=\"prefs-cont left ui-tabs-panel ";
@@ -244,8 +297,9 @@ page += "ui-widget-content ui-corner-bottom\" aria-labelledby=\"ui-id-33\" ";
 page += "role=\"tabpanel\" aria-expanded=\"true\" aria-hidden=\"true\" style=\"display: none;\">";
 page += "\t<div class=\"inner-block\">";
 page += "\t\t<p class=\"m-top3\">These are the watches you have currently set. Click any to remove.</p>";
-page += "\t\t<ul class-\"m-top3\" id=\"stock-alert-list\">";
+page += "\t\t<ul class=\"m-top3\" id=\"stock-alert-list\">";
 page += "\t\t</ul>";
+page += "\t\t<div class=\"m-top3\" id=\"stock-alert-messages\"></div>";
 page += "\t\t<form class=\"m-top10\" action=\"\" id=\"stock-form\">";
 page += "\t\t\t<select id=\"stock-alert-stock\" name=\"stock-alert-stock\">";
 page += "\t\t\t\t<option value=\"TCSE\">TCSE</option>";
@@ -297,6 +351,7 @@ page += "\t\t\t\t<option value=\"good\">Good</option>";
 page += "\t\t\t\t<option value=\"verygood\">Very Good</option>";
 page += "\t\t\t</select>";
 page += "\t\t\t<input type=\"text\" name=\"stock-value\" id=\"stock-value\" value=\"0\">";
+page += "\t\t\t <input type=\"text\" name=\"stock-note\" id=\"stock-note\" value=\"Add a note\">";
 page += "\t\t\t<div class=\"btn-wrap silver change\">";
 page += "\t\t\t\t<div class=\"btn\" id=\"stock-market-submit\">";
 // page += "\t\t\t\t\t<input class=\"c-pointer\" type=\"submit\" value=\"CREATE\">";
@@ -305,6 +360,9 @@ page += "\t\t\t\t</div>";
 page += "\t\t\t</div>";
 page += "\t\t\t<div>";
 page += "\t\t\t\t<br><input type=\"checkbox\" name=\"city-wide\" value=\"city-wide\" " + selected + "> Check this if you want the banner throughout the city.";
+page += "\t\t\t</div>";
+page += "\t\t\t<div>";
+page += "\t\t\t\t<br><input type=\"checkbox\" name=\"experimental\" value=\"experimental\" " + selected + "> Hack to get banners on forums and laptop (not recommended).";
 page += "\t\t\t</div>";
 page += "\t\t\t<div>";
 page += "\t\t\t\t<br><input type=\"checkbox\" name=\"color\" value=\"color\" " + addColor + "> Check this if you want colors on the Stock Market page.";
@@ -335,6 +393,17 @@ $("input:checkbox[name='color']").change(function() {
         addColor = "checked";
     } else {
         GM_setValue("toggle-color", "");
+        addColor = "";
+    }
+});
+
+$("input:checkbox[name='experimental']").change(function() {
+    // New state
+    if(this.checked) {
+        GM_setValue("toggle-experimental", "checked");
+        addColor = "checked";
+    } else {
+        GM_setValue("toggle-experimental", "");
         addColor = "";
     }
 });
@@ -416,6 +485,8 @@ function removeAlert(id) {
         // Example [4,YAZ,available,more,0]
         var alert = alertsInArray[alertKey].split("-");
         if (alert[0] === id) {
+            $("div#stock-alert-messages").css("color", "#FF4000").text(
+                "Removed alert: " + alertsInArray[alertKey]);
             continue;
         } else {
             if (newAlerts === "") {
@@ -445,10 +516,11 @@ $("#stock-action").change(function() {
 function clickSubmitButton() { 
     var data = $("#stock-form").serializeArray();
     // Debug
-    for (var key in data) {
+/*    for (var key in data) {
         // data is an array of  "name" / "value" pairs
         console.log(data[key]);
-    }
+      }
+*/
     // data[0] is name. data[1] is action, data[2] is less/equal/more, 
     // data[3] is value, data[4] is poor/average/good
     createAlert(data[0].value, data[1].value, 
@@ -469,12 +541,12 @@ function createAlert(stock, action, mutation, value) {
     }
     var newAlert = getSerial() + "-" + stock + "-" + action + "-" + 
         mutation + ((action === "forecast") ? "" : "-" + value);
+    $("div#stock-alert-messages").css("color", "#00FF80").text(
+        "Created alert: " + newAlert);
     stored = ((first) ? "" : stored + "|") + newAlert;
     GM_setValue("stock-alert", stored);
     // I think we are now on the settings page, so refresh it.
     addAlertsToSettings();
-    // Debug
-    console.log(GM_getValue("stock-alert", ""));
 }
 
 // Get a unique number to distinguish similar looking queries
@@ -634,11 +706,17 @@ window.setInterval(function() {
     }
 }, interval);
 
+// http://www.colorpicker.com/
 var colors = {
-    "veryPoor": "#F6CECE",
-    "poor": "#CEECF5",
-    "good": "#F5F6CE",
-    "veryGood": "#D8F6CE"
+    "veryPoor": "#EBD3F2", // "#F5A9F2",
+    "veryPoorUnavailable": "#D2BDD9",
+    "poor": "#F2DBD3",  // "#CEECF5",
+    "poorUnavailable": "#D9C4BD",
+    "good": "#D3EAF2", // "#F5F6CE",
+    "goodUnavailable": "#BDD2D9",
+    "veryGood": "#BDF2D3", //"#D8F6CE",
+    "veryGoodUnavailable": "#C4D98D",
+    "unavailable": "#D8D8D8"
 };
 
 function addColorToStockMarket() {
@@ -646,18 +724,40 @@ function addColorToStockMarket() {
         $("li.item-wrap").each(function() {
             var stock = $(this).attr("data-stock").toUpperCase();
             var forecast = stocks[parseInt(stockId[stock])][4];
+            var available = stocks[parseInt(stockId[stock])][3];
+            var availableTreshold = 100000;
+            var availableBool = parseInt(available) < availableTreshold;
+            if (availableBool) {
+                $(this).css("background-color", colors.unavailable);
+            }
             switch (forecast) {
                 case "Very Good":
-                    $(this).css("background-color", colors.veryGood);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.veryGoodUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.veryGood);
+                    }
                     break;
                 case "Good":
-                    $(this).css("background-color", colors.good);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.goodUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.good);
+                    }
                     break;
                 case "Poor":
-                    $(this).css("background-color", colors.poor);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.poorUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.poor);
+                    }
                     break;
                 case "Very Poor":
-                    $(this).css("background-color", colors.veryPoor);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.veryPoorUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.veryPoor);
+                    }
                     break;
             }
         });
@@ -666,18 +766,40 @@ function addColorToStockMarket() {
         $("li.item").each(function() {
             var stock = $(this).find("div.abbr-name.d-hide").text();
             var forecast = stocks[parseInt(stockId[stock])][4];
+            var available = stocks[parseInt(stockId[stock])][3];
+            var availableTreshold = 100000;
+            var availableBool = parseInt(available) < availableTreshold;
+            if (availableBool) {
+                $(this).css("background-color", colors.unavailable);
+            }
             switch (forecast) {
                 case "Very Good":
-                    $(this).css("background-color", colors.veryGood);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.veryGoodUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.veryGood);
+                    }
                     break;
                 case "Good":
-                    $(this).css("background-color", colors.good);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.goodUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.good);
+                    }
                     break;
                 case "Poor":
-                    $(this).css("background-color", colors.poor);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.poorUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.poor);
+                    }
                     break;
                 case "Very Poor":
-                    $(this).css("background-color", colors.veryPoor);
+                    if(availableBool) {
+                        $(this).css("backgroud-color", colors.veryPoorUnavailable);
+                    } else {
+                        $(this).css("background-color", colors.veryPoor);
+                    }
                     break;
             }
         });
