@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.8.1
+// @version      0.7.8.2
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -11,6 +11,7 @@
 // @match        https://www.torn.com/index.php
 // @match        https://www.torn.com/preferences.php*
 // @require      https://code.jquery.com/jquery-1.12.0.min.js
+// @require      https://raw.githubusercontent.com/jdfreder/pingjs/master/ping.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_log
@@ -20,7 +21,7 @@
 // ==/UserScript==
 /* jshint -W097 */
 /*global
-   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText, GM_xmlhttpRequest
+   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText, GM_xmlhttpRequest, ping
  */
 'use strict';
 
@@ -39,19 +40,33 @@
 // Feature request Nash: Mobile!
 // Bug Jerry: Banners not refreshing when not on Home page <-- @DONE
 // Bug Jerry / Afwas: data got cached insted of being refreshed <-- @DONE
-// Bug Jerry: No banners on events page <-- @FIXED?
-// Bug Jerry: Duplicate banners after opening several pages
+// Bug Jerry: No banners on events on laptop <-- @DONE
+// Bug Jerry: Duplicate banners after opening several pages <-- @DONE
 
-var versionString = "0.7.8.1";
+var versionString = "0.7.8.2";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
 // Coming soon
-var sockUrl2 = "http://us.relentless.pw/stock.json";
+var stockUrl2 = "http://us.relentless.pw/stock.json";
 // Roll your own
 var myAPI = "FancyAPIKeyGoesHere";
 var stockUrl3 = "http://api.torn.com/torn/?selections=stocks&key=" + myAPI;
 // Either one will be used
+/*
+var urls = [stockUrl1, stockUrl2, stockUrl3];
+for (var urlPing in urls) {
+    console.log(urlPing);
+    pPing(urls[urlPing]);
+}
+function pPing(url) {
+    return ping(url).then(function(delta) {
+        console.log(url + ': Ping time was ' + String(delta) + ' ms');
+    }).catch(function(err) {
+        console.error(url + ': Could not ping remote URL', err);
+    });
+}
+*/
 var stockUrl = stockUrl1;
 
 // Interval for refreshing banners in seconds. A good refresh-time is 60 seconds.
@@ -103,7 +118,7 @@ function getStocks() {
             }
             experimental = GM_getValue("toggle-experimental", "");
             if (experimental === "checked") {
-                // this is a rather dirty hack. I offer 100M if you can come up with
+                // This is a rather dirty hack. I offer 100M if you can come up with
                 // a *WORKING* solution to add the banners to pages or elements that
                 // are loaded AFTER the DOM. Examples of those pages: forums, laptop.
                 selected = GM_getValue("toggle-selected", "");
@@ -351,7 +366,7 @@ page += "\t\t\t\t<option value=\"good\">Good</option>";
 page += "\t\t\t\t<option value=\"verygood\">Very Good</option>";
 page += "\t\t\t</select>";
 page += "\t\t\t<input type=\"text\" name=\"stock-value\" id=\"stock-value\" value=\"0\">";
-page += "\t\t\t <input type=\"text\" name=\"stock-note\" id=\"stock-note\" value=\"Add a note\">";
+// page += "\t\t\t <input type=\"text\" name=\"stock-note\" id=\"stock-note\" value=\"Add a note\">";
 page += "\t\t\t<div class=\"btn-wrap silver change\">";
 page += "\t\t\t\t<div class=\"btn\" id=\"stock-market-submit\">";
 // page += "\t\t\t\t\t<input class=\"c-pointer\" type=\"submit\" value=\"CREATE\">";
@@ -733,28 +748,28 @@ function addColorToStockMarket() {
             switch (forecast) {
                 case "Very Good":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.veryGoodUnavailable);
+                        $(this).css("background-color", colors.veryGoodUnavailable);
                     } else {
                         $(this).css("background-color", colors.veryGood);
                     }
                     break;
                 case "Good":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.goodUnavailable);
+                        $(this).css("background-color", colors.goodUnavailable);
                     } else {
                         $(this).css("background-color", colors.good);
                     }
                     break;
                 case "Poor":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.poorUnavailable);
+                        $(this).css("background-color", colors.poorUnavailable);
                     } else {
                         $(this).css("background-color", colors.poor);
                     }
                     break;
                 case "Very Poor":
                     if(availableBool) {
-                        $(this).css("backgroud-color", colors.veryPoorUnavailable);
+                        $(this).css("background-color", colors.veryPoorUnavailable);
                     } else {
                         $(this).css("background-color", colors.veryPoor);
                     }
