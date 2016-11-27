@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.8.2
+// @version      0.7.9.0
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -42,8 +42,10 @@
 // Bug Jerry / Afwas: data got cached insted of being refreshed <-- @DONE
 // Bug Jerry: No banners on events on laptop <-- @DONE
 // Bug Jerry: Duplicate banners after opening several pages <-- @DONE
+// Request Hank: Do away with hack <-- @DONE
+// Request Hank: Turn alerts off instead of delete
 
-var versionString = "0.7.8.2";
+var versionString = "0.7.9.0";
 
 // Globals
 var stockUrl1 = "http://eu.relentless.pw/stock.json";
@@ -81,7 +83,7 @@ function getTime() {
 function getDate() {
     var now = new Date().toISOString().slice(0, 10);
     return now;
-}    
+}
 
 // Prevent caching
 $.ajaxSetup({ cache: false });
@@ -199,7 +201,7 @@ function checkUpdate() {
                 if (i > versionArray.length || version[i] > versionArray[i]) {
                     console.log(temp); console.log(version[i] > versionArray[i]);
                     $("h4").parent().notify(
-                        "There is a new version of the Stock Market Alert script available <a href=\"" + 
+                        "There is a new version of the Stock Market Alert script available <a href=\"" +
                         url + "\">here</a>.");
                     GM_setValue("version-check", getDate() + "|1");
                     break;
@@ -234,10 +236,10 @@ function placeBanner(message) {
     // Defaults to Home page only
     selected = GM_getValue("toggle-selected", "");
     if (selected === "checked") {
-           $("h4").parent().notify(message);
+           $("hr.page-head-delimiter:first").notify(message);
     } else {
         if ($("h4.left:contains('Home')").text().length) {
-            $("h4").parent().notify(message);
+            $("hr.page-head-delimiter:first").notify(message);
         }
     }
 }
@@ -377,9 +379,6 @@ page += "\t\t\t<div>";
 page += "\t\t\t\t<br><input type=\"checkbox\" name=\"city-wide\" value=\"city-wide\" " + selected + "> Check this if you want the banner throughout the city.";
 page += "\t\t\t</div>";
 page += "\t\t\t<div>";
-page += "\t\t\t\t<br><input type=\"checkbox\" name=\"experimental\" value=\"experimental\" " + selected + "> Hack to get banners on forums and laptop (not recommended).";
-page += "\t\t\t</div>";
-page += "\t\t\t<div>";
 page += "\t\t\t\t<br><input type=\"checkbox\" name=\"color\" value=\"color\" " + addColor + "> Check this if you want colors on the Stock Market page.";
 page += "\t\t\t</div>";
 page += "\t\t</form>";
@@ -412,21 +411,10 @@ $("input:checkbox[name='color']").change(function() {
     }
 });
 
-$("input:checkbox[name='experimental']").change(function() {
-    // New state
-    if(this.checked) {
-        GM_setValue("toggle-experimental", "checked");
-        addColor = "checked";
-    } else {
-        GM_setValue("toggle-experimental", "");
-        addColor = "";
-    }
-});
-
 // Add alerts. This is for page-load
 addAlertsToSettings();
 
-// Add page to settingspage 
+// Add page to settingspage
 $("li#stock-market").click(function() {
     // Just the fancy click on the left-side menu
     $("li.ui-tabs-active").removeClass("ui-state-active").removeClass("ui-tabs-active");
@@ -488,7 +476,7 @@ function addAlertsToSettings() {
         addAlertsToSettings();
     });
 }
-    
+
 function removeAlert(id) {
     var newAlerts = "";
     // This first part is identical to processAlerts()
@@ -528,7 +516,7 @@ $("#stock-action").change(function() {
 });
 
 // Event handler for clicking Create
-function clickSubmitButton() { 
+function clickSubmitButton() {
     var data = $("#stock-form").serializeArray();
     // Debug
 /*    for (var key in data) {
@@ -536,10 +524,10 @@ function clickSubmitButton() {
         console.log(data[key]);
       }
 */
-    // data[0] is name. data[1] is action, data[2] is less/equal/more, 
+    // data[0] is name. data[1] is action, data[2] is less/equal/more,
     // data[3] is value, data[4] is poor/average/good
-    createAlert(data[0].value, data[1].value, 
-                ((data[1].value === "forecast") ? data[3].value : data[2].value), 
+    createAlert(data[0].value, data[1].value,
+                ((data[1].value === "forecast") ? data[3].value : data[2].value),
                 ((data[1].value === "forecast") ? "" : data[4].value));
 }
 
@@ -554,7 +542,7 @@ function createAlert(stock, action, mutation, value) {
         GM_setValue("serial", "0");
         first = 1;
     }
-    var newAlert = getSerial() + "-" + stock + "-" + action + "-" + 
+    var newAlert = getSerial() + "-" + stock + "-" + action + "-" +
         mutation + ((action === "forecast") ? "" : "-" + value);
     $("div#stock-alert-messages").css("color", "#00FF80").text(
         "Created alert: " + newAlert);
@@ -598,7 +586,7 @@ function processAlerts() {
         var al = alertsInArray[alert].split("-");
         // Get stock data for this stock
         var stId = stockId[al[1]];
-        
+
         st = stocks[stId];
         // console.log("Compare stocks[stId] with al[1]: " + stocks[stId][0] + " <-> " + al[1] + ". stId = " + stId);
         // Switch over action 'price', 'available', 'forecast'
@@ -649,7 +637,7 @@ function processAlerts() {
                         break;
                     case "more":
                         // if (stock[name][available_share] > available) { ... }
-                        // 
+                        //
                         if (parseInt(st[3]) > parseInt(al[4])) {
                             // Print banner
                             text = al[1] + " - There more than " + formatNumber(al[4]) + " (" + formatNumber(st[3]) + ") shares in " + st[1] + " available.";
@@ -818,5 +806,5 @@ function addColorToStockMarket() {
                     break;
             }
         });
-    }   
+    }
 }
