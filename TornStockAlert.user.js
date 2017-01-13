@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.9.0
+// @version      0.7.9.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -45,15 +45,15 @@
 // Request Hank: Do away with hack <-- @DONE
 // Request Hank: Turn alerts off instead of delete
 
-var versionString = "0.7.9.0";
+var versionString = "0.7.9.1";
 
 // Globals
-var stockUrl1 = "http://eu.relentless.pw/stock.json";
+var stockUrl1 = "https://eu.relentless.pw/stock.json";
 // Coming soon
-var stockUrl2 = "http://us.relentless.pw/stock.json";
+var stockUrl2 = "https://us.relentless.pw/stock.json";
 // Roll your own
 var myAPI = "FancyAPIKeyGoesHere";
-var stockUrl3 = "http://api.torn.com/torn/?selections=stocks&key=" + myAPI;
+var stockUrl3 = "https://api.torn.com/torn/?selections=stocks&key=" + myAPI;
 // Either one will be used
 /*
 var urls = [stockUrl1, stockUrl2, stockUrl3];
