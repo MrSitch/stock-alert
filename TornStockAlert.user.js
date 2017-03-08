@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.7.9.1
+// @version      0.8.0.0
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        http://www.torn.com/index.php
@@ -45,31 +45,17 @@
 // Request Hank: Do away with hack <-- @DONE
 // Request Hank: Turn alerts off instead of delete
 
-var versionString = "0.7.9.1";
+var versionString = "0.8.0.0";
 
 // Globals
-var stockUrl1 = "https://eu.relentless.pw/stock.json";
-// Coming soon
-var stockUrl2 = "https://us.relentless.pw/stock.json";
-// Roll your own
+
+//******
+//* ADD YOUR API KEY TO THE NEXT LINE
+//* THERE IS NOTHING ELSE YOU NEED TO CHANGE
+//******
 var myAPI = "FancyAPIKeyGoesHere";
-var stockUrl3 = "https://api.torn.com/torn/?selections=stocks&key=" + myAPI;
-// Either one will be used
-/*
-var urls = [stockUrl1, stockUrl2, stockUrl3];
-for (var urlPing in urls) {
-    console.log(urlPing);
-    pPing(urls[urlPing]);
-}
-function pPing(url) {
-    return ping(url).then(function(delta) {
-        console.log(url + ': Ping time was ' + String(delta) + ' ms');
-    }).catch(function(err) {
-        console.error(url + ': Could not ping remote URL', err);
-    });
-}
-*/
-var stockUrl = stockUrl1;
+
+var stockUrl = "https://api.torn.com/torn/?selections=stocks&key=" + myAPI;
 
 // Interval for refreshing banners in seconds. A good refresh-time is 60 seconds.
 // The stockmarket seems to refresh just after 00, 15, 30, 45 minutes every hour.
