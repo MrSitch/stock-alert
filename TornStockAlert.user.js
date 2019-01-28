@@ -1,51 +1,30 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.8.0.0
+// @version      0.9.0.0
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
-// @match        http://www.torn.com/index.php
-// @match        http://www.torn.com/*
-// @match        https://www.torn.com/*
-// @match        http://www.torn.com/preferences.php*
-// @match        https://www.torn.com/index.php
-// @match        https://www.torn.com/preferences.php*
+// @match        *://*.torn.com/index.php
+// @match        *://*.torn.com/preferences.php*
 // @require      https://code.jquery.com/jquery-1.12.0.min.js
 // @require      https://raw.githubusercontent.com/jdfreder/pingjs/master/ping.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_log
 // @grant        GM_getResourceText
+// @connect      api.torn.com
 // @grant        GM_xmlhttpRequest
+// @updateURL    https://github.com/Afwas/stock-alert/raw/master/TornStockAlert.user.js
 // @license      GPL v2 or higher. See https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 // ==/UserScript==
 /* jshint -W097 */
 /*global
-   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText, GM_xmlhttpRequest, ping
+   GM_setValue, GM_getValue, GM_log, $, jQuery, document, window, alert, GM_getResourceText, GM_xmlhttpRequest, ping,
+   console
  */
 'use strict';
 
-// Feature request Nash: time every 15 minutes a few seconds after 13, 28, 43 and 58
-// Feature request Nash: Show on all pages <-- @DONE
-// Bug Hank: very good and very poor forecast <-- @DONE
-// Feature request Afwas: Add demand
-// Bug BraveKath: Remove the last alert from settings <-- @DONE
-// Bug decap101: Removing more than one alert doesn't work <-- @DONE
-// Bug decap101: Wrong data for stock, picks wrong stock. <-- @SEVERE @DONE
-// Feature request ?? : Firefox / Greasemonkey <-- @DONE
-// Bug decap101: Missing SYS in list <-- @DONE
-// Feature request Afwas: Working on alert if there's a new version of this script
-// @TODO US server
-// @TODO Test API key
-// Feature request Nash: Mobile!
-// Bug Jerry: Banners not refreshing when not on Home page <-- @DONE
-// Bug Jerry / Afwas: data got cached insted of being refreshed <-- @DONE
-// Bug Jerry: No banners on events on laptop <-- @DONE
-// Bug Jerry: Duplicate banners after opening several pages <-- @DONE
-// Request Hank: Do away with hack <-- @DONE
-// Request Hank: Turn alerts off instead of delete
-
-var versionString = "0.8.0.0";
+var versionString = "0.9.0.0";
 
 // Globals
 
@@ -53,7 +32,7 @@ var versionString = "0.8.0.0";
 //* ADD YOUR API KEY TO THE NEXT LINE
 //* THERE IS NOTHING ELSE YOU NEED TO CHANGE
 //******
-var myAPI = "FancyAPIKeyGoesHere";
+var myAPI = "YOU API KEY GOES HERE";
 
 var stockUrl = "https://api.torn.com/torn/?selections=stocks&key=" + myAPI;
 
@@ -79,12 +58,17 @@ var stocks = [];
 var newData = 1;
 var refresh = 0;
 function getStocks() {
-    $.ajax({
+    GM_xmlhttpRequest({
         // Append timestring to url to prevent caching
         url: stockUrl, // + "?" + new Date().getTime().toString(),
         cache: false,
-        success: function( data ) {
-            // data is already an object
+        onload: function( res ) {
+			if (res.responseText.indexOf('<html>') > -1) {
+				console.log('Apparent network or server related error in Torn Stock Alert');
+				console.log(res.responseText);
+				return;
+			}
+            var data = JSON.parse(res.responseText);
             stocks = [];
             for(var key in data.stocks) {
                 if (key == 25) {
@@ -153,57 +137,6 @@ function checkNewData() {
     // change denotes a change in shareprices. Go update!
     return change;
 }
-
-// A method to alert when there is a new
-// version of this script
-function checkUpdate() {
-    var url = "https://github.com/Afwas/stock-alert/raw/master/TornStockAlert.user.js";
-    GM_xmlhttpRequest({
-        method: "GET",
-        url: url,
-        onload: function(response) {
-            var vline;
-            var lines =  response.responseText.split('\n');
-            for(var i = 0;  i < lines.length; i++){
-                vline = lines[i].match(/^var versionString/);
-                if (vline) {
-                    vline = lines[i];
-                    break;
-                }
-            }
-            var version = vline.match(/[\d\.]/g);
-            console.log("version: " + version);
-            var versionStringMod = String(versionString).replace(/\./g, ",.,");
-            var versionArray = versionStringMod.split(',');
-            console.log("versionArray: " + versionArray);
-            // Default:
-            GM_setValue("version-check", getDate() + "|0");
-            for (i = 0; i < version.length; i++) {
-                if (version[i] === ".") {
-                    continue;
-                }
-                var temp = "Comparing " + version[i] + " > " + versionArray[i] + ": ";
-                // i > versionArray.length means the new version has a sub-version-number
-                if (i > versionArray.length || version[i] > versionArray[i]) {
-                    console.log(temp); console.log(version[i] > versionArray[i]);
-                    $("h4").parent().notify(
-                        "There is a new version of the Stock Market Alert script available <a href=\"" +
-                        url + "\">here</a>.");
-                    GM_setValue("version-check", getDate() + "|1");
-                    break;
-                }
-                console.log(temp); console.log(version[i] > versionArray[i]);
-            }
-        }
-    });
-}
-var checkedToday = GM_getValue("version-check", "0|1");
-console.log("GM_getValue(\"version-check\"]: " + GM_getValue("version-check", "0|1"));
-var todayCheck = checkedToday.split("|");
-if (todayCheck[0] < getDate() || todayCheck[1] === "1") {
-    checkUpdate();
-}
-
 
 // Notify adds the cool banner to the top of page index,php
 $.fn.notify = function(message) {
@@ -444,7 +377,7 @@ function addAlertsToSettings() {
         }
         var alert = alertsInArray[alertKey].split("-");
         var str = "#" + alert[0] + ": \t" + alert[1] + "\t" + alert[2] +
-            "\t" + alert[3] +  ((alert[2] === "forecast") ? "" : "\t" + alert[4]);
+            "\t" + alert[3] + ((alert[2] === "forecast") ? "" : "\t" + alert[4]);
         $("ul#stock-alert-list").append(
             "<li id=\"stock" + alert[0] + "\">" + str + "</li>"
          );
