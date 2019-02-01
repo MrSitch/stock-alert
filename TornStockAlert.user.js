@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.9.1.0
+// @version      0.9.1.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        *://*.torn.com/index.php
 // @match        *://*.torn.com/preferences.php*
+// @match        *://*.torn.com/stockexchange.php*
 // @require      https://code.jquery.com/jquery-1.12.0.min.js
 // @require      https://raw.githubusercontent.com/jdfreder/pingjs/master/ping.js
 // @grant        GM_setValue
@@ -23,8 +24,6 @@
    console
  */
 'use strict';
-
-var versionString = "0.9.1.0";
 
 // Globals
 
