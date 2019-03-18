@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.9.1.1
+// @version      0.9.2
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        *://*.torn.com/index.php
@@ -57,11 +57,17 @@ var stocks = [];
 var newData = 1;
 var refresh = 0;
 function getStocks() {
-    GM_xmlhttpRequest({
-        // Append timestring to url to prevent caching
-        url: stockUrl, // + "?" + new Date().getTime().toString(),
-        cache: false,
-        success: function( data ) {
+	GM_xmlhttpRequest({
+		url: stockUrl,
+		responseType: 'json',
+		method: "GET",
+		onload: function( res ) {
+			if (res.responseText.indexOf('<html>') > -1) {
+				console.log('Apparent network or server related error in TornStockAlert userscript');
+				console.log(res.responseText);
+				return;
+			}
+			var data = res.response;
             stocks = [];
             for(var key in data.stocks) {
                 if (key == 25) {
