@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Stock Alert
 // @namespace    http://eu.relentless.pw/
-// @version      0.9.2
+// @version      0.9.1.1
 // @description  Notifies user defined stock market events
 // @author       Afwas [1337627]
 // @match        *://*.torn.com/index.php
