@@ -31,7 +31,7 @@
 //* ADD YOUR API KEY TO THE NEXT LINE
 //* THERE IS NOTHING ELSE YOU NEED TO CHANGE
 //******
-var myAPI = "YOU API KEY GOES HERE";
+var myAPI = "SXVvZjO6fnPlbkRX";
 
 var stockUrl = "https://api.torn.com/torn/?selections=stocks&key=" + myAPI;
 
